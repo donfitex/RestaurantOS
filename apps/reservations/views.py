@@ -47,4 +47,7 @@ class ReservationViewSet(mixins.ListModelMixin, mixins.RetrieveModelMixin, mixin
             raise PermissionDenied("Customers can cancel using the cancel action.")
         if set(request.data) != {"status"}:
             raise ValidationError("Only status changes are supported; cancel and rebook to change a slot.")
-        return Response(self.get_serializer(transition_reservation(reservation, request.data["status"])).data)
+        target = request.data["status"]
+        if not isinstance(target, str) or target not in Reservation.Status.values:
+            raise ValidationError({"status": "Choose a valid reservation status."})
+        return Response(self.get_serializer(transition_reservation(reservation, target)).data)

@@ -42,6 +42,8 @@ class OrderViewSet(mixins.ListModelMixin, mixins.RetrieveModelMixin, viewsets.Ge
         if set(request.data) != {"status"}:
             raise ValidationError("Use this endpoint to update status only.")
         target = request.data["status"]
+        if not isinstance(target, str) or target not in Order.Status.values:
+            raise ValidationError({"status": "Choose a valid order status."})
         if not is_admin(request.user):
             allowed = {"MANAGER": {"CONFIRMED", "PREPARING", "READY", "SERVED", "COMPLETED", "CANCELLED"}, "WAITER": {"CONFIRMED", "SERVED"}, "CASHIER": {"CONFIRMED", "COMPLETED"}, "KITCHEN": {"PREPARING", "READY"}}
             if target not in allowed.get(request.user.role, set()):
