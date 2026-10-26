@@ -1,6 +1,6 @@
 from .base import *  # noqa: F403
 from django.core.exceptions import ImproperlyConfigured
-if not os.getenv("SECRET_KEY") or len(SECRET_KEY) < 50:
+if not os.getenv("SECRET_KEY") or len(SECRET_KEY) < 50 or SECRET_KEY.startswith(("replace-", "development-", "django-insecure-")):
     raise ImproperlyConfigured("Production requires a SECRET_KEY of at least 50 characters")
 if not os.getenv("ALLOWED_HOSTS") or "*" in ALLOWED_HOSTS:
     raise ImproperlyConfigured("Production requires explicit ALLOWED_HOSTS")

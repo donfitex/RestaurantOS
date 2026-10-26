@@ -1,6 +1,6 @@
 import hashlib
 import json
-from decimal import Decimal, ROUND_HALF_UP
+from decimal import Decimal, ROUND_HALF_UP, DecimalException
 from django.contrib.auth import get_user_model
 from django.db import transaction
 from django.utils import timezone
@@ -15,7 +15,13 @@ CENT = Decimal("0.01")
 
 
 def money(value):
-    return Decimal(value).quantize(CENT, rounding=ROUND_HALF_UP)
+    try:
+        amount = Decimal(value)
+        if not amount.is_finite():
+            raise ValidationError("Amounts must be finite.")
+        return amount.quantize(CENT, rounding=ROUND_HALF_UP)
+    except DecimalException:
+        raise ValidationError("Invalid monetary amount.")
 
 
 @transaction.atomic
@@ -62,6 +68,8 @@ def create_order(*, customer, branch, items, order_type="TAKEAWAY", table=None, 
         if len(modifiers) != len(modifier_ids):
             raise ValidationError("An invalid modifier was selected.")
         unit_price = money(item.price + sum((m.price for m in modifiers), Decimal("0")))
+        if unit_price > Decimal("9999999999.99"):
+            raise ValidationError("Item price exceeds the supported limit.")
         line_total = money(unit_price * quantity)
         subtotal += line_total
         snapshots.append((item, quantity, unit_price, line_total, line.get("notes", ""), modifiers))
@@ -69,6 +77,8 @@ def create_order(*, customer, branch, items, order_type="TAKEAWAY", table=None, 
     if discount < 0 or discount > subtotal:
         raise ValidationError("Discount must be between zero and the subtotal.")
     tax = money((subtotal - discount) * branch.tax_rate)
+    if subtotal + tax - discount > Decimal("999999999999.99"):
+        raise ValidationError("Order total exceeds the supported limit.")
     data = dict(branch=branch, customer=customer, table=table, order_type=order_type, notes=notes, delivery_address=delivery_address, subtotal=subtotal, discount=discount, tax=tax, total=subtotal + tax - discount, currency=branch.restaurant.currency, request_fingerprint=fingerprint)
     if request_key:
         data["request_key"] = request_key
@@ -89,6 +99,12 @@ def transition_order(order, target, *, allowed_current=None):
     transitions = {"PENDING": {"CONFIRMED", "CANCELLED"}, "CONFIRMED": {"PREPARING", "CANCELLED"}, "PREPARING": {"READY"}, "READY": {"SERVED", "COMPLETED"}, "SERVED": {"COMPLETED"}}
     if target not in transitions.get(order.status, set()):
         raise Conflict("Invalid order status transition.")
+    from apps.payments.services import settled_total
+    paid = settled_total(order)
+    if target == "CANCELLED" and paid > 0:
+        raise Conflict("Refund recorded payments before cancelling this order.")
+    if target == "COMPLETED" and paid < order.total:
+        raise Conflict("Record full payment before completing this order.")
     from apps.inventory.services import deduct_order_stock, restore_order_stock
     if target == "CONFIRMED":
         deduct_order_stock(order)

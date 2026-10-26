@@ -11,6 +11,8 @@ def apply_movement(stock, delta, kind, *, actor=None, order=None, notes="", refe
     balance = stock.quantity + delta
     if balance < 0:
         raise Conflict(f"Insufficient stock for {stock.ingredient.name}.")
+    if balance > Decimal("99999999999.999"):
+        raise ValidationError("Stock balance exceeds the supported limit.")
     if delta == 0:
         raise ValidationError("Stock movements must have a nonzero quantity.")
     stock.quantity = balance
