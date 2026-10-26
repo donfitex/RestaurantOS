@@ -14,4 +14,4 @@ COPY . .
 RUN DJANGO_SETTINGS_MODULE=config.development python manage.py collectstatic --noinput && mkdir -p /app/media && chown -R app:app /app
 USER app
 EXPOSE 8000
-CMD ["python", "manage.py", "runserver", "0.0.0.0:8000", "--noreload"]
+CMD ["gunicorn", "config.wsgi:application", "--config", "gunicorn.conf.py"]

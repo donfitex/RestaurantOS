@@ -39,6 +39,13 @@ services:
       db:
         condition: service_healthy
     restart: "no"
+  notifications:
+    <<: *app
+    command: ["python", "manage.py", "run_notification_worker", "--interval", "10"]
+    depends_on:
+      migrate:
+        condition: service_completed_successfully
+    restart: unless-stopped
   web:
     <<: *app
     ports:
