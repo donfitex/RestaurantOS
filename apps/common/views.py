@@ -64,3 +64,23 @@ def order_confirmation(request, pk):
 @ensure_csrf_cookie
 def reservation_page(request):
     return render(request, "public/reservations.html")
+
+
+@login_required
+@ensure_csrf_cookie
+def staff_dashboard(request):
+    from django.core.exceptions import PermissionDenied
+    if request.user.role == "CUSTOMER" and not request.user.is_superuser:
+        raise PermissionDenied
+    return render(request, "public/staff.html")
+
+
+@login_required
+def receipt(request, pk):
+    from apps.orders.models import Order
+    from .scoping import scope_branches
+    from django.core.exceptions import PermissionDenied
+    if request.user.role not in ["ADMIN", "MANAGER", "CASHIER"] and not request.user.is_superuser:
+        raise PermissionDenied
+    order = get_object_or_404(scope_branches(Order.objects.select_related("branch__restaurant", "customer").prefetch_related("items__modifiers", "payments"), request.user), pk=pk)
+    return render(request, "public/receipt.html", {"order": order})

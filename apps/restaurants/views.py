@@ -15,3 +15,17 @@ class BranchViewSet(ReadOnlyModelViewSet):
     serializer_class = BranchSerializer
     permission_classes = [AllowAny]
     filterset_fields = ["restaurant"]
+
+
+from apps.common.scoping import staff_branches
+from apps.users.permissions import DomainPermission
+
+
+class StaffBranchViewSet(ReadOnlyModelViewSet):
+    serializer_class = BranchSerializer
+    permission_classes = [DomainPermission]
+    read_roles = ("MANAGER", "CASHIER", "WAITER", "KITCHEN", "INVENTORY_MANAGER")
+    write_roles = ()
+
+    def get_queryset(self):
+        return staff_branches(self.request.user).select_related("restaurant").prefetch_related("operating_hours").order_by("name")

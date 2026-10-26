@@ -11,3 +11,9 @@ class PublicInterfaceTests(TestCase):
 
     def test_reservation_interface_requires_login(self):
         self.assertEqual(self.client.get("/reservations/").status_code, 302)
+
+    def test_customer_cannot_open_staff_operations(self):
+        from django.contrib.auth import get_user_model
+        user = get_user_model().objects.create_user(username="guest", email="guest@example.com")
+        self.client.force_login(user)
+        self.assertEqual(self.client.get("/staff/").status_code, 403)
