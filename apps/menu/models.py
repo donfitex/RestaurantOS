@@ -3,6 +3,7 @@ from django.core.validators import MinValueValidator
 from django.db import models
 
 from apps.common.models import ActiveModel, TimestampedModel
+from apps.common.validators import validate_image_upload
 
 
 class MenuCategory(ActiveModel):
@@ -31,7 +32,9 @@ class MenuItem(ActiveModel):
     name = models.CharField(max_length=160)
     description = models.TextField(blank=True)
     price = models.DecimalField(max_digits=12, decimal_places=2, validators=[MinValueValidator(0)])
-    image = models.ImageField(upload_to="menu/%Y/%m/", blank=True)
+    image = models.ImageField(
+        upload_to="menu/%Y/%m/", blank=True, validators=[validate_image_upload]
+    )
     sku = models.CharField(max_length=64)
     availability = models.BooleanField(default=True, db_index=True)
     preparation_time = models.PositiveSmallIntegerField(default=15)

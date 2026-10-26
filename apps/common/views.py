@@ -135,3 +135,23 @@ def receipt(request, pk):
         pk=pk,
     )
     return render(request, "public/receipt.html", {"order": order})
+
+
+def local_media(request, path):
+    from pathlib import Path
+
+    from django.conf import settings
+    from django.http import Http404
+    from django.views.static import serve
+
+    if not getattr(settings, "SERVE_LOCAL_MEDIA", False) or Path(path).suffix.lower() not in [
+        ".jpg",
+        ".jpeg",
+        ".png",
+        ".webp",
+    ]:
+        raise Http404
+    response = serve(request, path, document_root=settings.MEDIA_ROOT)
+    response["Content-Security-Policy"] = "default-src 'none'; sandbox"
+    response["X-Content-Type-Options"] = "nosniff"
+    return response
