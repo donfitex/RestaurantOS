@@ -2,16 +2,6 @@ projects:
   - name: restaurantos
     environments:
       - name: production
-        databases:
-          - name: restaurantos-db
-            databaseName: restaurantos
-            user: restaurantos
-            region: frankfurt
-            postgresMajorVersion: "17"
-            plan: 0.1c-256mb
-            diskSizeGB: 1
-            storageAutoscalingEnabled: true
-            ipAllowList: []
         services:
           - type: web
             name: restaurantos-web
@@ -19,29 +9,22 @@ projects:
             dockerfilePath: ./Dockerfile
             dockerContext: .
             region: frankfurt
-            plan: 0.5c-512mb
+            plan: free
             numInstances: 1
             autoDeployTrigger: checksPass
             healthCheckPath: /health/
-            preDeployCommand: python manage.py migrate --noinput
-            maxShutdownDelaySeconds: 60
-            disk:
-              name: restaurantos-media
-              mountPath: /app/media
-              sizeGB: 1
+            dockerCommand: python manage.py migrate --noinput && exec gunicorn config.wsgi:application --config gunicorn.conf.py
             envVars:
               - key: DJANGO_SETTINGS_MODULE
                 value: config.production
               - key: SECRET_KEY
                 generateValue: true
               - key: DATABASE_URL
-                fromDatabase:
-                  name: restaurantos-db
-                  property: connectionString
+                sync: false
               - key: ALLOWED_HOSTS
                 value: localhost,127.0.0.1
               - key: REQUIRE_NOTIFICATION_WORKER
-                value: "true"
+                value: "false"
               - key: SERVE_LOCAL_MEDIA
                 value: "true"
               - key: WEB_CONCURRENCY
@@ -50,78 +33,3 @@ projects:
                 value: "4"
               - key: FORWARDED_ALLOW_IPS
                 value: "*"
-              - key: EMAIL_BACKEND
-                value: django.core.mail.backends.smtp.EmailBackend
-              - key: EMAIL_HOST
-                sync: false
-              - key: EMAIL_PORT
-                value: "587"
-              - key: EMAIL_HOST_USER
-                sync: false
-              - key: EMAIL_HOST_PASSWORD
-                sync: false
-              - key: EMAIL_USE_TLS
-                value: "true"
-              - key: DEFAULT_FROM_EMAIL
-                sync: false
-          - type: worker
-            name: restaurantos-notifications
-            runtime: docker
-            dockerfilePath: ./Dockerfile
-            dockerContext: .
-            dockerCommand: python manage.py run_notification_worker --interval 10
-            region: frankfurt
-            plan: 0.5c-512mb
-            autoDeployTrigger: checksPass
-            maxShutdownDelaySeconds: 60
-            envVars:
-              - key: DJANGO_SETTINGS_MODULE
-                value: config.production
-              - key: SECRET_KEY
-                fromService:
-                  type: web
-                  name: restaurantos-web
-                  envVarKey: SECRET_KEY
-              - key: DATABASE_URL
-                fromDatabase:
-                  name: restaurantos-db
-                  property: connectionString
-              - key: ALLOWED_HOSTS
-                value: localhost,127.0.0.1
-              - key: REQUIRE_NOTIFICATION_WORKER
-                value: "true"
-              - key: EMAIL_BACKEND
-                fromService:
-                  type: web
-                  name: restaurantos-web
-                  envVarKey: EMAIL_BACKEND
-              - key: EMAIL_HOST
-                fromService:
-                  type: web
-                  name: restaurantos-web
-                  envVarKey: EMAIL_HOST
-              - key: EMAIL_PORT
-                fromService:
-                  type: web
-                  name: restaurantos-web
-                  envVarKey: EMAIL_PORT
-              - key: EMAIL_HOST_USER
-                fromService:
-                  type: web
-                  name: restaurantos-web
-                  envVarKey: EMAIL_HOST_USER
-              - key: EMAIL_HOST_PASSWORD
-                fromService:
-                  type: web
-                  name: restaurantos-web
-                  envVarKey: EMAIL_HOST_PASSWORD
-              - key: EMAIL_USE_TLS
-                fromService:
-                  type: web
-                  name: restaurantos-web
-                  envVarKey: EMAIL_USE_TLS
-              - key: DEFAULT_FROM_EMAIL
-                fromService:
-                  type: web
-                  name: restaurantos-web
-                  envVarKey: DEFAULT_FROM_EMAIL

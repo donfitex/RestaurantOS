@@ -1,32 +1,36 @@
-# Deploy RestaurantOS on Render
+# Deploy RestaurantOS on Render Free with Neon
 
-The root `render.yaml` Blueprint defines the production web service, PostgreSQL database, notification worker, and persistent media disk in Frankfurt. It uses the smallest paid plans because Render's free web services sleep, free databases expire after 30 days, free services cannot attach persistent disks, and background workers are paid-only.
+The root `render.yaml` Blueprint creates one free Render Docker web service and uses the external Neon PostgreSQL database supplied through `DATABASE_URL`. It does not create a Render database, background worker, or persistent disk.
 
-## Blueprint resources
+## Configure Neon
 
-- `restaurantos-web`: Docker web service, one 512 MB instance, `/health/` readiness check, and a pre-deploy database migration.
-- `restaurantos-db`: PostgreSQL 17, private-network-only access, 1 GB initial storage with autoscaling.
-- `restaurantos-notifications`: one 512 MB worker using the transactional notification outbox.
-- `restaurantos-media`: 1 GB persistent disk mounted at `/app/media` for validated menu images.
+The Django application already uses `dj-database-url` and `psycopg` to connect to PostgreSQL. Use the pooled Neon `DATABASE_URL` for web traffic and keep it in an ignored environment file or a secret manager. Never commit the connection string.
 
-Uploaded media requires a persistent disk, which limits the web service to one instance and causes a short interruption during deploys. Keep the database and web service in Frankfurt to use Render's private network. The Render Postgres connection string is passed to each app service without exposing it in the repository.
+```powershell
+npm.cmd install --global neon@latest
+neon.cmd login
+neon.cmd init -y --org-id org-steep-field-51623490 --project-id plain-dew-42324195 --branch production --services postgres --agent codex
+neon.cmd deploy
+```
 
-## Create and deploy
+The Neon CLI's project setup also configures its Codex integration. If browser sign-in is requested, complete it in the browser before rerunning `neon init`. The CLI should pull `DATABASE_URL` into the existing ignored `.env` file.
 
-1. Confirm the estimates on Render's pricing page before applying the Blueprint. The minimum baseline is about **$20.55 USD/month**, before bandwidth above the Hobby workspace's included amount and any storage autoscaling: web $7, worker $7, PostgreSQL compute $6, 1 GB database storage $0.30, and 1 GB media disk $0.25.
-2. Open the Render Dashboard, choose **New > Blueprint**, and connect `donfitex/RestaurantOS` on `main`.
-3. Review the three paid resources and the persistent disk. Do not select free compute for production data.
-4. Enter the SMTP host, SMTP username/password, and verified sender address when prompted. Use the provider's STARTTLS SMTP endpoint on port 587. Do not commit these values.
-5. Apply the Blueprint and monitor the web and worker deploys. Database migrations run in the web service's pre-deploy step.
-6. Confirm `/health/` returns `200` with both database and notification-worker checks healthy.
-7. Create the first production administrator from a Render one-off shell or shell session with `python manage.py createsuperuser`. Do not copy the local demo accounts or demo password into production.
-8. Configure the live restaurant, branches, menu, tables, staff, and business hours in Django admin before opening ordering to customers.
+## Apply the Render Blueprint
 
-Render supplies the `onrender.com` URL and TLS automatically. `config.production` adds Render's assigned hostname and HTTPS origin at runtime. The application trusts `X-Forwarded-For` only when Render's documented `RENDER=true` marker is present, so database-backed rate limits remain separated by client address behind Render's proxy.
+1. Open the Render Dashboard and create a Blueprint from `donfitex/RestaurantOS` on `main`.
+2. Select the Free plan and provide the pooled Neon `DATABASE_URL` when prompted. Do not include the URL in source control or a public issue.
+3. Apply the Blueprint and wait for the Docker build and deploy. The startup command runs Django migrations before Gunicorn starts.
+4. Check `/health/`. Free Render services do not provide an interactive shell, so create the first administrator from a local checkout after Neon has deployed the schema: run `python manage.py migrate` and `python manage.py createsuperuser` with the Neon `DATABASE_URL` available in the ignored `.env`. Configure the restaurant and its real data in the admin site.
 
-## Production follow-up
+Render supplies the `onrender.com` hostname and TLS. `config.production` adds the assigned hostname and HTTPS origin at runtime.
 
-- Verify SMTP delivery through both the web process (password resets) and notification worker (outbox events).
-- Set up an external monitoring target for `/health/`, inspect failed outbox records, and regularly export a database backup outside Render.
-- Add a custom domain only after its owner and DNS records are available. Use the domain in `CSRF_TRUSTED_ORIGINS` if it differs from the assigned Render hostname.
-- Payment records are staff-verified ledger entries; this release does not connect a live payment processor.
+## Free-plan limitations
+
+- Render's free web service sleeps after inactivity and has an ephemeral filesystem. Requests can be slow after idle periods, and locally stored uploaded menu images can disappear after a restart or redeploy.
+- Render does not provide a free background worker. The notification worker is omitted and `REQUIRE_NOTIFICATION_WORKER` is disabled, so queued notification outbox messages will not be processed automatically.
+- The default Django email backend writes messages to application logs; it does not deliver password resets or notifications to inboxes.
+- Neon and Render free plans have usage and availability limits. This setup is suited to a demo or evaluation, not a production restaurant relying on continuous availability, durable media, or automatic notifications.
+
+To move beyond a demo, add durable object storage for media, an always-on notification worker and SMTP provider, and monitor database usage and backups.
+
+Payment records remain staff-verified ledger entries; this release does not connect a live payment processor.

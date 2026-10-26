@@ -4,7 +4,7 @@ The default Compose deployment binds HTTP to 127.0.0.1 only, uses PostgreSQL, an
 
 Public production must use config.production behind a trusted HTTPS reverse proxy. Set a random SECRET_KEY (50+ characters), explicit ALLOWED_HOSTS, CSRF_TRUSTED_ORIGINS with https origins, and a PostgreSQL DATABASE_URL. Do not expose the database port. Run migrations once per release before starting workers. Review schema changes and back up before deployment.
 
-For Render deployment, use the production Blueprint in `render.yaml` and its service, database, SMTP, storage, and initialization runbook in `docs/render-deployment.md`.
+For a free Render demo using Neon PostgreSQL, follow the Blueprint and plan limitations in `docs/render-deployment.md`. The free service sleeps when idle and does not provide durable media or a notification worker.
 
 Gunicorn configuration lives in gunicorn.conf.py. Tune WEB_CONCURRENCY and GUNICORN_THREADS to database connections and memory. Worker recycling bounds long-lived process growth; graceful timeouts support rolling restarts. Do not trust arbitrary forwarded headers. FORWARDED_ALLOW_IPS must identify only the reverse proxy; configure the proxy to overwrite client-supplied forwarding headers. External TLS termination must also have a deliberate trusted scheme configuration before enabling redirection.
 

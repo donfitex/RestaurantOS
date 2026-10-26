@@ -3,8 +3,8 @@ from types import SimpleNamespace
 import pytest
 from django.test import override_settings
 
-from apps.common.exceptions import Conflict
 from apps.common.client_ip import client_ip
+from apps.common.exceptions import Conflict
 from apps.orders.services import create_order, transition_order
 from apps.payments.services import record_payment
 from tests.factories import MenuItemFactory, UserFactory
