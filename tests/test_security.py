@@ -1,12 +1,35 @@
+from types import SimpleNamespace
+
 import pytest
 from django.test import override_settings
 
 from apps.common.exceptions import Conflict
+from apps.common.client_ip import client_ip
 from apps.orders.services import create_order, transition_order
 from apps.payments.services import record_payment
 from tests.factories import MenuItemFactory, UserFactory
 
 pytestmark = pytest.mark.django_db
+
+
+def test_client_ip_trusts_forwarded_address_only_on_render(monkeypatch):
+    request = SimpleNamespace(
+        META={"REMOTE_ADDR": "10.0.0.1", "HTTP_X_FORWARDED_FOR": "203.0.113.8, 10.0.0.1"}
+    )
+
+    monkeypatch.setenv("RENDER", "true")
+    assert client_ip(request) == "203.0.113.8"
+
+    monkeypatch.delenv("RENDER")
+    assert client_ip(request) == "10.0.0.1"
+
+
+def test_client_ip_ignores_invalid_render_forwarded_address(monkeypatch):
+    request = SimpleNamespace(
+        META={"REMOTE_ADDR": "10.0.0.1", "HTTP_X_FORWARDED_FOR": "not-an-ip, 10.0.0.1"}
+    )
+    monkeypatch.setenv("RENDER", "true")
+    assert client_ip(request) == "10.0.0.1"
 
 
 def test_security_headers(api_client):

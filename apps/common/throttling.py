@@ -7,6 +7,7 @@ from django.conf import settings
 from django.db.models import F
 from rest_framework.throttling import BaseThrottle
 
+from .client_ip import client_ip
 from .models import RateLimitBucket
 
 
@@ -25,12 +26,12 @@ def consume(scope, identity, limit, seconds=60):
 
 
 class DatabaseRateThrottle(BaseThrottle):
-    """Atomic counters shared by all workers; do not trust forwarded client headers."""
+    """Atomic shared counters using Render's documented proxy client address when hosted there."""
 
     def allow_request(self, request, view):
         authenticated = request.user.is_authenticated
         identity = (
-            str(request.user.pk) if authenticated else request.META.get("REMOTE_ADDR", "unknown")
+            str(request.user.pk) if authenticated else client_ip(request)
         )
         return consume(
             "user" if authenticated else "anonymous", identity, 600 if authenticated else 60

@@ -6,6 +6,8 @@ from django.conf import settings
 from django.db import DatabaseError
 from django.http import JsonResponse
 
+from .client_ip import client_ip
+
 
 class SecurityPolicyMiddleware:
     def __init__(self, get_response):
@@ -25,7 +27,7 @@ class SecurityPolicyMiddleware:
 
             if not consume(
                 "authentication",
-                request.META.get("REMOTE_ADDR", "unknown"),
+                client_ip(request),
                 getattr(settings, "AUTH_RATE_LIMIT", 10),
             ):
                 response = JsonResponse(
