@@ -6,6 +6,8 @@ The root `render.yaml` Blueprint creates one free Render Docker web service and 
 
 The Django application already uses `dj-database-url` and `psycopg` to connect to PostgreSQL. Use the pooled Neon `DATABASE_URL` for web traffic and the direct `DATABASE_URL_UNPOOLED` for schema migrations. Keep both in ignored environment files or a secret manager; never commit either connection string. The Render startup command temporarily selects the direct URL for migrations, then Gunicorn uses the pooled URL.
 
+`npm run build` is provided as a convenience wrapper around Django's build-time system check and static-file collection; the Docker image runs the same static collection during its build.
+
 ```powershell
 npm.cmd install --global neon@latest
 neon.cmd login

@@ -1,0 +1,9 @@
+{
+  "scripts": {
+    "build": "python manage.py check --settings=config.build && python manage.py collectstatic --noinput --settings=config.build"
+  },
+  "dependencies": {
+    "@neon/config": "^1.9.4",
+    "@neon/env": "^1.6.5"
+  }
+}

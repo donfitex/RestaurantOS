@@ -225,3 +225,4 @@ staticfiles/
 media/
 !.env.example
 .neon
+node_modules/
