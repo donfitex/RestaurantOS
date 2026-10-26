@@ -1,13 +1,15 @@
+import os
 from datetime import date, time, timedelta
 from decimal import Decimal
-import os
+
 import pytest
-from playwright.sync_api import sync_playwright, expect
+from playwright.sync_api import expect, sync_playwright
+
 from apps.inventory.models import Recipe, RecipeIngredient
 from apps.orders.models import Order
 from apps.reservations.models import Reservation
 from apps.restaurants.models import OperatingHours
-from tests.factories import MenuItemFactory, TableFactory, UserFactory, InventoryFactory
+from tests.factories import InventoryFactory, MenuItemFactory, TableFactory, UserFactory
 
 pytestmark = [pytest.mark.django_db(transaction=True), pytest.mark.e2e]
 
@@ -15,6 +17,7 @@ pytestmark = [pytest.mark.django_db(transaction=True), pytest.mark.e2e]
 @pytest.fixture
 def browser_page(live_server):
     from contextlib import contextmanager
+
     @contextmanager
     def open_browser():
         with sync_playwright() as playwright:
@@ -29,10 +32,12 @@ def browser_page(live_server):
                 yield page
             finally:
                 from pathlib import Path
+
                 Path(".local/e2e").mkdir(parents=True, exist_ok=True)
                 page.screenshot(path=".local/e2e/latest.png", full_page=True)
                 Path(".local/e2e/latest.html").write_text(page.content(), encoding="utf-8")
                 browser.close()
+
     return open_browser, live_server.url
 
 
@@ -47,9 +52,11 @@ def login(page, base, username, password="Test-password-835!"):
 def test_customer_registration_order_and_reservation(browser_page):
     open_browser, base = browser_page
     item = MenuItemFactory()
-    table = TableFactory(branch=item.branch)
+    TableFactory(branch=item.branch)
     tomorrow = date.today() + timedelta(days=2)
-    OperatingHours.objects.create(branch=item.branch, weekday=tomorrow.weekday(), opens_at=time(8), closes_at=time(23))
+    OperatingHours.objects.create(
+        branch=item.branch, weekday=tomorrow.weekday(), opens_at=time(8), closes_at=time(23)
+    )
     with open_browser() as page:
         page.goto(base + "/register/")
         page.get_by_label("Username").fill("browserguest")
@@ -81,6 +88,7 @@ def test_customer_registration_order_and_reservation(browser_page):
 def test_staff_order_kitchen_and_inventory_workflow(browser_page):
     from apps.orders.services import create_order
     from apps.payments.services import record_payment
+
     open_browser, base = browser_page
     item = MenuItemFactory()
     stock = InventoryFactory(branch=item.branch, quantity=Decimal("5"))
@@ -89,8 +97,12 @@ def test_staff_order_kitchen_and_inventory_workflow(browser_page):
     customer = UserFactory()
     manager = UserFactory(role="MANAGER")
     item.branch.managers.add(manager)
-    order = create_order(customer=customer, branch=item.branch, items=[{"menu_item": item.pk, "quantity": 1}])
-    record_payment(order=order, amount=order.total, method="CASH", reference="browser-payment", actor=manager)
+    order = create_order(
+        customer=customer, branch=item.branch, items=[{"menu_item": item.pk, "quantity": 1}]
+    )
+    record_payment(
+        order=order, amount=order.total, method="CASH", reference="browser-payment", actor=manager
+    )
     with open_browser() as page:
         login(page, base, manager.username)
         page.goto(base + "/staff/")
@@ -102,7 +114,7 @@ def test_staff_order_kitchen_and_inventory_workflow(browser_page):
         expect(page.get_by_text("COMPLETED", exact=True)).to_be_visible()
         page.get_by_role("button", name="Inventory", exact=True).click()
         expect(page.get_by_text(stock.ingredient.name, exact=True)).to_be_visible()
-        page.set_viewport_size({"width":390,"height":844})
+        page.set_viewport_size({"width": 390, "height": 844})
         assert page.evaluate("document.documentElement.scrollWidth <= innerWidth")
     stock.refresh_from_db()
     order.refresh_from_db()

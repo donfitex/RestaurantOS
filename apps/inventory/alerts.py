@@ -1,5 +1,7 @@
 from decimal import Decimal
+
 from django.utils import timezone
+
 from .models import StockAlert
 
 
@@ -9,6 +11,7 @@ def sync_stock_alert(stock):
     if low and alert is None:
         alert = StockAlert.objects.create(inventory_item=stock)
         from apps.common.notifications import notify_low_stock
+
         notify_low_stock(stock, alert)
         return alert
     if alert is not None and alert.is_active != low:
@@ -17,5 +20,6 @@ def sync_stock_alert(stock):
         alert.save(update_fields=["is_active", "resolved_at", "updated_at"])
         if low:
             from apps.common.notifications import notify_low_stock
+
             notify_low_stock(stock, alert)
     return alert

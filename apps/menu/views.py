@@ -1,9 +1,10 @@
 import django_filters
+from django.db.models import Prefetch
 from rest_framework.permissions import AllowAny
 from rest_framework.viewsets import ReadOnlyModelViewSet
+
 from .models import MenuCategory, MenuItem, MenuModifier
 from .serializers import CategorySerializer, MenuItemSerializer
-from django.db.models import Prefetch
 
 
 class MenuFilter(django_filters.FilterSet):
@@ -16,7 +17,9 @@ class MenuFilter(django_filters.FilterSet):
 
 
 class CategoryViewSet(ReadOnlyModelViewSet):
-    queryset = MenuCategory.objects.filter(is_active=True, restaurant__is_active=True).order_by("name")
+    queryset = MenuCategory.objects.filter(is_active=True, restaurant__is_active=True).order_by(
+        "name"
+    )
     serializer_class = CategorySerializer
     permission_classes = [AllowAny]
     filterset_fields = ["restaurant"]
@@ -24,7 +27,19 @@ class CategoryViewSet(ReadOnlyModelViewSet):
 
 
 class MenuItemViewSet(ReadOnlyModelViewSet):
-    queryset = MenuItem.objects.filter(is_active=True, category__is_active=True, branch__is_active=True, branch__restaurant__is_active=True).select_related("category", "branch").prefetch_related(Prefetch("modifiers", queryset=MenuModifier.objects.filter(is_active=True))).order_by("name")
+    queryset = (
+        MenuItem.objects.filter(
+            is_active=True,
+            category__is_active=True,
+            branch__is_active=True,
+            branch__restaurant__is_active=True,
+        )
+        .select_related("category", "branch")
+        .prefetch_related(
+            Prefetch("modifiers", queryset=MenuModifier.objects.filter(is_active=True))
+        )
+        .order_by("name")
+    )
     serializer_class = MenuItemSerializer
     permission_classes = [AllowAny]
     filterset_class = MenuFilter

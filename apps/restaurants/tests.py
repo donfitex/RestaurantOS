@@ -1,6 +1,7 @@
 from django.db import IntegrityError, transaction
 from django.test import TestCase
-from .models import Restaurant, Branch
+
+from .models import Branch, Restaurant
 
 
 class BranchTests(TestCase):

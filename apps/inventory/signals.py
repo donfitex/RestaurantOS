@@ -1,7 +1,8 @@
 from django.db.models.signals import post_save
 from django.dispatch import receiver
-from .models import InventoryItem, Ingredient
+
 from .alerts import sync_stock_alert
+from .models import Ingredient, InventoryItem
 
 
 @receiver(post_save, sender=InventoryItem)

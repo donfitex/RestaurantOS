@@ -1,12 +1,26 @@
 from decimal import Decimal
+
 from rest_framework import serializers
-from .models import Payment, Refund
+
+from .models import Payment
 
 
 class PaymentSerializer(serializers.ModelSerializer):
     class Meta:
         model = Payment
-        fields = ["id", "order", "amount", "refunded_amount", "currency", "method", "status", "reference", "recorded_by", "paid_at", "created_at"]
+        fields = [
+            "id",
+            "order",
+            "amount",
+            "refunded_amount",
+            "currency",
+            "method",
+            "status",
+            "reference",
+            "recorded_by",
+            "paid_at",
+            "created_at",
+        ]
         read_only_fields = fields
 
 

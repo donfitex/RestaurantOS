@@ -1,23 +1,31 @@
 from decimal import Decimal
+
 import pytest
+
 from apps.common.exceptions import Conflict
 from apps.common.models import Notification
 from apps.inventory.models import Recipe, RecipeIngredient, StockMovement
 from apps.inventory.services import adjust_stock
-from apps.menu.models import MenuModifier, MenuItemModifier
+from apps.menu.models import MenuItemModifier, MenuModifier
 from apps.orders.models import Order
 from apps.orders.services import create_order, transition_order
 from apps.payments.services import record_payment, refund_payment
-from tests.factories import UserFactory, MenuItemFactory, InventoryFactory, IngredientFactory
+from tests.factories import InventoryFactory, MenuItemFactory, UserFactory
 
 pytestmark = pytest.mark.django_db
 
 
 def test_modifier_snapshot_and_tax_rounding():
     item = MenuItemFactory(price=Decimal("10.01"))
-    modifier = MenuModifier.objects.create(restaurant=item.branch.restaurant, name="Extra", price="1.01")
+    modifier = MenuModifier.objects.create(
+        restaurant=item.branch.restaurant, name="Extra", price="1.01"
+    )
     MenuItemModifier.objects.create(menu_item=item, modifier=modifier)
-    order = create_order(customer=UserFactory(), branch=item.branch, items=[{"menu_item": item.pk, "quantity": 3, "modifiers": [modifier.pk]}])
+    order = create_order(
+        customer=UserFactory(),
+        branch=item.branch,
+        items=[{"menu_item": item.pk, "quantity": 3, "modifiers": [modifier.pk]}],
+    )
     assert order.subtotal == Decimal("33.06")
     assert order.tax == Decimal("2.48")
     assert order.items.get().modifiers.get().price == Decimal("1.01")
@@ -30,7 +38,9 @@ def test_multi_ingredient_shortage_rolls_back_every_movement():
     recipe = Recipe.objects.create(menu_item=item)
     for stock in [first, second]:
         RecipeIngredient.objects.create(recipe=recipe, ingredient=stock.ingredient, quantity="1")
-    order = create_order(customer=UserFactory(), branch=item.branch, items=[{"menu_item": item.pk, "quantity": 1}])
+    order = create_order(
+        customer=UserFactory(), branch=item.branch, items=[{"menu_item": item.pk, "quantity": 1}]
+    )
     with pytest.raises(Conflict):
         transition_order(order, "CONFIRMED")
     first.refresh_from_db()
@@ -52,17 +62,33 @@ def test_stock_adjustment_never_goes_negative():
 def test_refund_retry_does_not_double_refund():
     user = UserFactory()
     item = MenuItemFactory()
-    order = create_order(customer=user, branch=item.branch, items=[{"menu_item": item.pk, "quantity": 1}])
-    payment = record_payment(order=order, amount=order.total, method="CASH", reference="payment-1", actor=user)
-    first = refund_payment(payment=payment, amount="100", reference="refund-1", reason="Adjustment", actor=user)
-    assert refund_payment(payment=payment, amount="100", reference="refund-1", reason="Adjustment", actor=user).pk == first.pk
+    order = create_order(
+        customer=user, branch=item.branch, items=[{"menu_item": item.pk, "quantity": 1}]
+    )
+    payment = record_payment(
+        order=order, amount=order.total, method="CASH", reference="payment-1", actor=user
+    )
+    first = refund_payment(
+        payment=payment, amount="100", reference="refund-1", reason="Adjustment", actor=user
+    )
+    assert (
+        refund_payment(
+            payment=payment, amount="100", reference="refund-1", reason="Adjustment", actor=user
+        ).pk
+        == first.pk
+    )
     payment.refresh_from_db()
     assert payment.refunded_amount == Decimal("100")
 
 
 def test_unavailable_menu_item_creates_no_order():
     from rest_framework.exceptions import ValidationError
+
     item = MenuItemFactory(availability=False)
     with pytest.raises(ValidationError):
-        create_order(customer=UserFactory(), branch=item.branch, items=[{"menu_item": item.pk, "quantity": 1}])
+        create_order(
+            customer=UserFactory(),
+            branch=item.branch,
+            items=[{"menu_item": item.pk, "quantity": 1}],
+        )
     assert not Order.objects.exists()

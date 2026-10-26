@@ -3,15 +3,19 @@ from django.shortcuts import get_object_or_404
 from rest_framework.decorators import action
 from rest_framework.response import Response
 from rest_framework.viewsets import ReadOnlyModelViewSet
+
 from apps.common.scoping import scope_branches
 from apps.users.permissions import DomainPermission
-from .models import InventoryItem, StockMovement
-from .serializers import InventorySerializer, MovementSerializer, AdjustmentSerializer
+
+from .models import InventoryItem
+from .serializers import AdjustmentSerializer, InventorySerializer, MovementSerializer
 from .services import adjust_stock
 
 
 class InventoryViewSet(ReadOnlyModelViewSet):
-    queryset = InventoryItem.objects.select_related("branch", "ingredient").order_by("ingredient__name")
+    queryset = InventoryItem.objects.select_related("branch", "ingredient").order_by(
+        "ingredient__name"
+    )
     serializer_class = InventorySerializer
     permission_classes = [DomainPermission]
     read_roles = write_roles = ("MANAGER", "INVENTORY_MANAGER")
@@ -25,7 +29,9 @@ class InventoryViewSet(ReadOnlyModelViewSet):
 
     @action(detail=False, methods=["get"], url_path="low-stock")
     def low_stock(self, request):
-        qs = self.filter_queryset(self.get_queryset()).filter(quantity__lte=F("ingredient__minimum_stock"))
+        qs = self.filter_queryset(self.get_queryset()).filter(
+            quantity__lte=F("ingredient__minimum_stock")
+        )
         page = self.paginate_queryset(qs)
         return self.get_paginated_response(self.get_serializer(page, many=True).data)
 

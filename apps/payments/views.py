@@ -3,11 +3,13 @@ from rest_framework.decorators import action
 from rest_framework.exceptions import PermissionDenied
 from rest_framework.response import Response
 from rest_framework.viewsets import ReadOnlyModelViewSet
+
 from apps.common.scoping import scope_branches
 from apps.orders.models import Order
 from apps.users.permissions import DomainPermission, is_admin
+
 from .models import Payment
-from .serializers import PaymentSerializer, PaymentInput, RefundInput
+from .serializers import PaymentInput, PaymentSerializer, RefundInput
 from .services import record_payment, refund_payment
 
 
@@ -31,7 +33,9 @@ class PaymentViewSet(ReadOnlyModelViewSet):
         serializer = PaymentInput(data=request.data)
         serializer.is_valid(raise_exception=True)
         data = dict(serializer.validated_data)
-        order = get_object_or_404(scope_branches(Order.objects.all(), request.user), pk=data.pop("order"))
+        order = get_object_or_404(
+            scope_branches(Order.objects.all(), request.user), pk=data.pop("order")
+        )
         payment = record_payment(order=order, actor=request.user, **data)
         return Response(PaymentSerializer(payment).data, status=201)
 
@@ -41,5 +45,10 @@ class PaymentViewSet(ReadOnlyModelViewSet):
             raise PermissionDenied("Only managers may record refunds.")
         serializer = RefundInput(data=request.data)
         serializer.is_valid(raise_exception=True)
-        refund = refund_payment(payment=self.get_object(), actor=request.user, **serializer.validated_data)
-        return Response({"id": refund.pk, "amount": str(refund.amount), "reference": refund.reference}, status=201)
+        refund = refund_payment(
+            payment=self.get_object(), actor=request.user, **serializer.validated_data
+        )
+        return Response(
+            {"id": refund.pk, "amount": str(refund.amount), "reference": refund.reference},
+            status=201,
+        )

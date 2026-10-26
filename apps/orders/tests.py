@@ -1,11 +1,14 @@
 from decimal import Decimal
 from uuid import uuid4
+
 from django.contrib.auth import get_user_model
 from django.test import TestCase
 from rest_framework.exceptions import ValidationError
+
 from apps.common.exceptions import Conflict
-from apps.restaurants.models import Restaurant, Branch
 from apps.menu.models import MenuCategory, MenuItem
+from apps.restaurants.models import Branch, Restaurant
+
 from .models import Order
 from .services import create_order, transition_order
 
@@ -15,11 +18,20 @@ class OrderServiceTests(TestCase):
         restaurant = Restaurant.objects.create(name="One")
         self.branch = Branch.objects.create(restaurant=restaurant, name="Central", tax_rate="0.075")
         category = MenuCategory.objects.create(restaurant=restaurant, name="Mains")
-        self.item = MenuItem.objects.create(branch=self.branch, category=category, name="Rice", sku="rice", price="1000")
-        self.user = get_user_model().objects.create_user(username="customer", email="customer@example.com")
+        self.item = MenuItem.objects.create(
+            branch=self.branch, category=category, name="Rice", sku="rice", price="1000"
+        )
+        self.user = get_user_model().objects.create_user(
+            username="customer", email="customer@example.com"
+        )
 
     def place(self, **kwargs):
-        return create_order(customer=self.user, branch=self.branch, items=[{"menu_item": self.item.pk, "quantity": 2}], **kwargs)
+        return create_order(
+            customer=self.user,
+            branch=self.branch,
+            items=[{"menu_item": self.item.pk, "quantity": 2}],
+            **kwargs,
+        )
 
     def test_prices_tax_and_snapshot(self):
         order = self.place(discount=Decimal("100"))
@@ -47,9 +59,14 @@ class OrderServiceTests(TestCase):
 
     def test_api_rejects_customer_discount_and_cross_customer_access(self):
         from rest_framework.test import APIClient
+
         client = APIClient()
         client.force_authenticate(self.user)
-        payload = {"branch": self.branch.pk, "items": [{"menu_item": self.item.pk, "quantity": 1}], "discount": "10"}
+        payload = {
+            "branch": self.branch.pk,
+            "items": [{"menu_item": self.item.pk, "quantity": 1}],
+            "discount": "10",
+        }
         self.assertEqual(client.post("/api/v1/orders/", payload, format="json").status_code, 403)
         payload.pop("discount")
         response = client.post("/api/v1/orders/", payload, format="json")
@@ -60,15 +77,24 @@ class OrderServiceTests(TestCase):
 
     def test_kitchen_roles_and_preparation_timestamps(self):
         from rest_framework.test import APIClient
+
         order = transition_order(self.place(), "CONFIRMED")
-        kitchen = get_user_model().objects.create_user(username="chef", email="chef@example.com", role="KITCHEN")
+        kitchen = get_user_model().objects.create_user(
+            username="chef", email="chef@example.com", role="KITCHEN"
+        )
         self.branch.staff.add(kitchen)
         client = APIClient()
         client.force_authenticate(kitchen)
         self.assertEqual(client.get("/api/v1/orders/kitchen/").data["count"], 1)
-        self.assertEqual(client.patch(f"/api/v1/orders/{order.pk}/", {"status": "PREPARING"}).status_code, 200)
-        self.assertEqual(client.patch(f"/api/v1/orders/{order.pk}/", {"status": "READY"}).status_code, 200)
-        self.assertEqual(client.patch(f"/api/v1/orders/{order.pk}/", {"status": "COMPLETED"}).status_code, 403)
+        self.assertEqual(
+            client.patch(f"/api/v1/orders/{order.pk}/", {"status": "PREPARING"}).status_code, 200
+        )
+        self.assertEqual(
+            client.patch(f"/api/v1/orders/{order.pk}/", {"status": "READY"}).status_code, 200
+        )
+        self.assertEqual(
+            client.patch(f"/api/v1/orders/{order.pk}/", {"status": "COMPLETED"}).status_code, 403
+        )
         order.refresh_from_db()
         self.assertIsNotNone(order.preparing_at)
         self.assertIsNotNone(order.ready_at)

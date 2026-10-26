@@ -29,7 +29,11 @@ class Notification(TimestampedModel):
     last_error = models.CharField(max_length=200, blank=True)
 
     class Meta:
-        constraints = [models.UniqueConstraint(fields=["event_key", "recipient"], name="unique_notification_recipient")]
+        constraints = [
+            models.UniqueConstraint(
+                fields=["event_key", "recipient"], name="unique_notification_recipient"
+            )
+        ]
 
 
 class RateLimitBucket(models.Model):

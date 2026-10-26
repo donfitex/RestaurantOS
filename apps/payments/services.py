@@ -1,11 +1,14 @@
 from decimal import Decimal
 from typing import Protocol
+
 from django.db import transaction
-from django.db.models import Sum, F
+from django.db.models import F, Sum
 from django.utils import timezone
 from rest_framework.exceptions import ValidationError
+
 from apps.common.exceptions import Conflict
 from apps.orders.models import Order
+
 from .models import Payment, Refund
 
 SETTLED = ["PAID", "PARTIALLY_REFUNDED", "REFUNDED"]
@@ -23,7 +26,9 @@ def validate_amount(value):
 
 
 def settled_total(order):
-    return order.payments.filter(status__in=SETTLED).aggregate(total=Sum(F("amount") - F("refunded_amount")))["total"] or Decimal("0")
+    return order.payments.filter(status__in=SETTLED).aggregate(
+        total=Sum(F("amount") - F("refunded_amount"))
+    )["total"] or Decimal("0")
 
 
 @transaction.atomic
@@ -32,16 +37,35 @@ def record_payment(*, order, amount, method, reference, actor):
     amount = validate_amount(amount)
     existing = Payment.objects.filter(reference=reference).first()
     if existing:
-        if existing.order_id == order.pk and existing.amount == amount and existing.method == method:
+        if (
+            existing.order_id == order.pk
+            and existing.amount == amount
+            and existing.method == method
+        ):
             return existing
         raise Conflict("Payment reference already belongs to another transaction.")
     if order.status == "CANCELLED" or amount > order.total - settled_total(order):
         raise Conflict("Payment exceeds the outstanding balance or the order is cancelled.")
     if method not in Payment.Method.values:
         raise ValidationError("Unsupported payment method.")
-    payment = Payment.objects.create(order=order, amount=amount, currency=order.currency, method=method, reference=reference, recorded_by=actor, status="PAID", paid_at=timezone.now())
+    payment = Payment.objects.create(
+        order=order,
+        amount=amount,
+        currency=order.currency,
+        method=method,
+        reference=reference,
+        recorded_by=actor,
+        status="PAID",
+        paid_at=timezone.now(),
+    )
     from apps.common.notifications import queue_email
-    queue_email(event_key=f"payment:{payment.pk}:PAID", recipient=order.customer.email, subject=f"Payment received for order #{order.pk}", body=f"Payment of {order.currency} {amount} has been recorded. Reference: {reference}.")
+
+    queue_email(
+        event_key=f"payment:{payment.pk}:PAID",
+        recipient=order.customer.email,
+        subject=f"Payment received for order #{order.pk}",
+        body=f"Payment of {order.currency} {amount} has been recorded. Reference: {reference}.",
+    )
     return payment
 
 
@@ -57,8 +81,12 @@ def refund_payment(*, payment, amount, reference, reason, actor):
         raise Conflict("Refund reference was already used.")
     if payment.status not in SETTLED or amount > payment.amount - payment.refunded_amount:
         raise Conflict("Refund exceeds the refundable balance.")
-    refund = Refund.objects.create(payment=payment, amount=amount, reference=reference, reason=reason, actor=actor)
+    refund = Refund.objects.create(
+        payment=payment, amount=amount, reference=reference, reason=reason, actor=actor
+    )
     payment.refunded_amount += amount
-    payment.status = "REFUNDED" if payment.refunded_amount == payment.amount else "PARTIALLY_REFUNDED"
+    payment.status = (
+        "REFUNDED" if payment.refunded_amount == payment.amount else "PARTIALLY_REFUNDED"
+    )
     payment.save(update_fields=["refunded_amount", "status", "updated_at"])
     return refund

@@ -1,4 +1,5 @@
 from django.core.management.base import BaseCommand
+
 from apps.common.notifications import dispatch_pending
 
 

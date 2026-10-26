@@ -1,7 +1,9 @@
 import uuid
+
 from django.conf import settings
 from django.core.validators import MinValueValidator
 from django.db import models
+
 from apps.common.models import TimestampedModel
 
 
@@ -20,9 +22,15 @@ class Order(TimestampedModel):
         COMPLETED = "COMPLETED", "Completed"
         CANCELLED = "CANCELLED", "Cancelled"
 
-    branch = models.ForeignKey("restaurants.Branch", on_delete=models.PROTECT, related_name="orders")
-    customer = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.PROTECT, related_name="orders")
-    table = models.ForeignKey("tables.Table", on_delete=models.PROTECT, null=True, blank=True, related_name="orders")
+    branch = models.ForeignKey(
+        "restaurants.Branch", on_delete=models.PROTECT, related_name="orders"
+    )
+    customer = models.ForeignKey(
+        settings.AUTH_USER_MODEL, on_delete=models.PROTECT, related_name="orders"
+    )
+    table = models.ForeignKey(
+        "tables.Table", on_delete=models.PROTECT, null=True, blank=True, related_name="orders"
+    )
     order_type = models.CharField(max_length=10, choices=Type.choices, default=Type.TAKEAWAY)
     status = models.CharField(max_length=12, choices=Status.choices, default=Status.PENDING)
     subtotal = models.DecimalField(max_digits=14, decimal_places=2, default=0)
@@ -42,8 +50,27 @@ class Order(TimestampedModel):
     stock_deducted = models.BooleanField(default=False)
 
     class Meta:
-        constraints = [models.CheckConstraint(condition=models.Q(subtotal__gte=0, tax__gte=0, discount__gte=0, total__gte=0), name="order_amounts_nonnegative"), models.CheckConstraint(condition=models.Q(total=models.F("subtotal") + models.F("tax") - models.F("discount")), name="order_total_consistent")]
-        indexes = [models.Index(fields=["branch", "status", "created_at"]), models.Index(fields=["customer", "created_at"]), models.Index(fields=["branch", "-priority", "created_at"], condition=models.Q(status__in=["CONFIRMED", "PREPARING", "READY"]), name="kitchen_queue_idx")]
+        constraints = [
+            models.CheckConstraint(
+                condition=models.Q(subtotal__gte=0, tax__gte=0, discount__gte=0, total__gte=0),
+                name="order_amounts_nonnegative",
+            ),
+            models.CheckConstraint(
+                condition=models.Q(
+                    total=models.F("subtotal") + models.F("tax") - models.F("discount")
+                ),
+                name="order_total_consistent",
+            ),
+        ]
+        indexes = [
+            models.Index(fields=["branch", "status", "created_at"]),
+            models.Index(fields=["customer", "created_at"]),
+            models.Index(
+                fields=["branch", "-priority", "created_at"],
+                condition=models.Q(status__in=["CONFIRMED", "PREPARING", "READY"]),
+                name="kitchen_queue_idx",
+            ),
+        ]
 
 
 class OrderItem(TimestampedModel):
@@ -56,7 +83,16 @@ class OrderItem(TimestampedModel):
     notes = models.TextField(blank=True)
 
     class Meta:
-        constraints = [models.CheckConstraint(condition=models.Q(quantity__gt=0, unit_price__gte=0, subtotal__gte=0), name="order_item_positive"), models.CheckConstraint(condition=models.Q(subtotal=models.F("quantity") * models.F("unit_price")), name="order_item_total_consistent")]
+        constraints = [
+            models.CheckConstraint(
+                condition=models.Q(quantity__gt=0, unit_price__gte=0, subtotal__gte=0),
+                name="order_item_positive",
+            ),
+            models.CheckConstraint(
+                condition=models.Q(subtotal=models.F("quantity") * models.F("unit_price")),
+                name="order_item_total_consistent",
+            ),
+        ]
 
 
 class OrderModifier(TimestampedModel):
@@ -66,4 +102,11 @@ class OrderModifier(TimestampedModel):
     price = models.DecimalField(max_digits=12, decimal_places=2)
 
     class Meta:
-        constraints = [models.UniqueConstraint(fields=["order_item", "modifier"], name="unique_order_item_modifier"), models.CheckConstraint(condition=models.Q(price__gte=0), name="order_modifier_nonnegative")]
+        constraints = [
+            models.UniqueConstraint(
+                fields=["order_item", "modifier"], name="unique_order_item_modifier"
+            ),
+            models.CheckConstraint(
+                condition=models.Q(price__gte=0), name="order_modifier_nonnegative"
+            ),
+        ]

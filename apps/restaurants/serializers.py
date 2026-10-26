@@ -1,5 +1,6 @@
 from rest_framework import serializers
-from .models import Restaurant, Branch, OperatingHours
+
+from .models import Branch, OperatingHours, Restaurant
 
 
 class HoursSerializer(serializers.ModelSerializer):

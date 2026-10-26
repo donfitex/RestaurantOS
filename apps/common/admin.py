@@ -1,5 +1,8 @@
 from django.contrib import admin
+
 from apps.users.permissions import is_admin
+
+from .models import Notification
 
 
 class AdministratorAccess:
@@ -26,6 +29,7 @@ class DomainAdmin(AdministratorAccess, admin.ModelAdmin):
 
 class LedgerAdmin(DomainAdmin):
     """Operational and financial state changes must go through services."""
+
     def has_add_permission(self, request):
         return False
 
@@ -34,9 +38,6 @@ class LedgerAdmin(DomainAdmin):
 
     def get_readonly_fields(self, request, obj=None):
         return tuple(field.name for field in self.model._meta.fields)
-
-
-from .models import Notification
 
 
 @admin.register(Notification)

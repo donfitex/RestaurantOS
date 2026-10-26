@@ -1,6 +1,12 @@
-from .base import *  # noqa: F403
 from django.core.exceptions import ImproperlyConfigured
-if not os.getenv("SECRET_KEY") or len(SECRET_KEY) < 50 or SECRET_KEY.startswith(("replace-", "development-", "django-insecure-")):
+
+from .base import *  # noqa: F403
+
+if (
+    not os.getenv("SECRET_KEY")
+    or len(SECRET_KEY) < 50
+    or SECRET_KEY.startswith(("replace-", "development-", "django-insecure-"))
+):
     raise ImproperlyConfigured("Production requires a SECRET_KEY of at least 50 characters")
 if not os.getenv("ALLOWED_HOSTS") or "*" in ALLOWED_HOSTS:
     raise ImproperlyConfigured("Production requires explicit ALLOWED_HOSTS")
@@ -15,5 +21,10 @@ SECURE_HSTS_INCLUDE_SUBDOMAINS = True
 SECURE_HSTS_PRELOAD = True
 SECURE_CONTENT_TYPE_NOSNIFF = True
 X_FRAME_OPTIONS = "DENY"
-CSRF_TRUSTED_ORIGINS = os.getenv("CSRF_TRUSTED_ORIGINS", "").split(",") if os.getenv("CSRF_TRUSTED_ORIGINS") else []
-STORAGES = {"default": {"BACKEND": "django.core.files.storage.FileSystemStorage"}, "staticfiles": {"BACKEND": "whitenoise.storage.CompressedManifestStaticFilesStorage"}}
+CSRF_TRUSTED_ORIGINS = (
+    os.getenv("CSRF_TRUSTED_ORIGINS", "").split(",") if os.getenv("CSRF_TRUSTED_ORIGINS") else []
+)
+STORAGES = {
+    "default": {"BACKEND": "django.core.files.storage.FileSystemStorage"},
+    "staticfiles": {"BACKEND": "whitenoise.storage.CompressedManifestStaticFilesStorage"},
+}

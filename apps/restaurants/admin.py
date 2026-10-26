@@ -1,6 +1,8 @@
 from django.contrib import admin
+
 from apps.common.admin import DomainAdmin
-from .models import Restaurant, Branch, OperatingHours
+
+from .models import Branch, OperatingHours, Restaurant
 
 
 class HoursInline(admin.TabularInline):

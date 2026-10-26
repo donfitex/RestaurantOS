@@ -1,6 +1,16 @@
 from django.contrib import admin
+
 from apps.common.admin import DomainAdmin, LedgerAdmin
-from .models import Ingredient, InventoryItem, StockMovement, Supplier, Recipe, RecipeIngredient, StockAlert
+
+from .models import (
+    Ingredient,
+    InventoryItem,
+    Recipe,
+    RecipeIngredient,
+    StockAlert,
+    StockMovement,
+    Supplier,
+)
 
 
 @admin.register(Ingredient)
@@ -21,7 +31,15 @@ class InventoryAdmin(DomainAdmin):
 
 @admin.register(StockMovement)
 class MovementAdmin(LedgerAdmin):
-    list_display = ("id", "inventory_item", "kind", "quantity", "balance_after", "actor", "created_at")
+    list_display = (
+        "id",
+        "inventory_item",
+        "kind",
+        "quantity",
+        "balance_after",
+        "actor",
+        "created_at",
+    )
     list_filter = ("kind", "inventory_item__branch", "created_at")
     search_fields = ("reference", "notes", "inventory_item__ingredient__name")
     list_select_related = ("inventory_item__ingredient", "actor")

@@ -1,11 +1,20 @@
 from decimal import Decimal
+
 import pytest
 from django.core.exceptions import ValidationError
 from django.db import IntegrityError, transaction
+
 from apps.inventory.models import InventoryItem, Recipe, RecipeIngredient
 from apps.orders.models import Order, OrderItem
 from apps.payments.models import Payment
-from tests.factories import UserFactory, BranchFactory, MenuItemFactory, TableFactory, InventoryFactory, IngredientFactory
+from tests.factories import (
+    BranchFactory,
+    IngredientFactory,
+    InventoryFactory,
+    MenuItemFactory,
+    TableFactory,
+    UserFactory,
+)
 
 pytestmark = pytest.mark.django_db
 
@@ -30,21 +39,37 @@ def test_inventory_unique_per_branch_ingredient():
 
 def test_order_total_database_constraint():
     with pytest.raises(IntegrityError), transaction.atomic():
-        Order.objects.create(branch=BranchFactory(), customer=UserFactory(), currency="NGN", subtotal="100", total="99")
+        Order.objects.create(
+            branch=BranchFactory(),
+            customer=UserFactory(),
+            currency="NGN",
+            subtotal="100",
+            total="99",
+        )
 
 
 def test_order_item_quantity_database_constraint():
     item = MenuItemFactory()
     order = Order.objects.create(branch=item.branch, customer=UserFactory(), currency="NGN")
     with pytest.raises(IntegrityError), transaction.atomic():
-        OrderItem.objects.create(order=order, menu_item=item, name=item.name, quantity=0, unit_price="100", subtotal="0")
+        OrderItem.objects.create(
+            order=order, menu_item=item, name=item.name, quantity=0, unit_price="100", subtotal="0"
+        )
 
 
 def test_payment_refund_cannot_exceed_amount_in_database():
     user = UserFactory()
     order = Order.objects.create(branch=BranchFactory(), customer=user, currency="NGN")
     with pytest.raises(IntegrityError), transaction.atomic():
-        Payment.objects.create(order=order, amount="10", refunded_amount="11", currency="NGN", method="CASH", reference="one", recorded_by=user)
+        Payment.objects.create(
+            order=order,
+            amount="10",
+            refunded_amount="11",
+            currency="NGN",
+            method="CASH",
+            reference="one",
+            recorded_by=user,
+        )
 
 
 def test_recipe_model_rejects_cross_restaurant_ingredient():

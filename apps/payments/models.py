@@ -1,4 +1,5 @@
 from django.db import models
+
 from apps.common.models import TimestampedModel
 
 
@@ -28,7 +29,14 @@ class Payment(TimestampedModel):
     paid_at = models.DateTimeField(null=True, blank=True)
 
     class Meta:
-        constraints = [models.CheckConstraint(condition=models.Q(amount__gt=0, refunded_amount__gte=0, refunded_amount__lte=models.F("amount")), name="payment_amounts_valid")]
+        constraints = [
+            models.CheckConstraint(
+                condition=models.Q(
+                    amount__gt=0, refunded_amount__gte=0, refunded_amount__lte=models.F("amount")
+                ),
+                name="payment_amounts_valid",
+            )
+        ]
         indexes = [models.Index(fields=["order", "status"])]
 
 
@@ -40,4 +48,6 @@ class Refund(TimestampedModel):
     actor = models.ForeignKey("users.User", on_delete=models.PROTECT)
 
     class Meta:
-        constraints = [models.CheckConstraint(condition=models.Q(amount__gt=0), name="refund_amount_positive")]
+        constraints = [
+            models.CheckConstraint(condition=models.Q(amount__gt=0), name="refund_amount_positive")
+        ]

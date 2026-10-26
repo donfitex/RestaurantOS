@@ -1,4 +1,5 @@
 from rest_framework import serializers
+
 from .models import MenuCategory, MenuItem, MenuModifier
 
 
@@ -20,4 +21,17 @@ class MenuItemSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = MenuItem
-        fields = ["id", "branch", "category", "category_name", "name", "description", "price", "image", "sku", "availability", "preparation_time", "modifiers"]
+        fields = [
+            "id",
+            "branch",
+            "category",
+            "category_name",
+            "name",
+            "description",
+            "price",
+            "image",
+            "sku",
+            "availability",
+            "preparation_time",
+            "modifiers",
+        ]

@@ -1,7 +1,11 @@
 from rest_framework.permissions import AllowAny
 from rest_framework.viewsets import ReadOnlyModelViewSet
-from .models import Restaurant, Branch
-from .serializers import RestaurantSerializer, BranchSerializer
+
+from apps.common.scoping import staff_branches
+from apps.users.permissions import DomainPermission
+
+from .models import Branch, Restaurant
+from .serializers import BranchSerializer, RestaurantSerializer
 
 
 class RestaurantViewSet(ReadOnlyModelViewSet):
@@ -11,14 +15,15 @@ class RestaurantViewSet(ReadOnlyModelViewSet):
 
 
 class BranchViewSet(ReadOnlyModelViewSet):
-    queryset = Branch.objects.filter(is_active=True, restaurant__is_active=True).select_related("restaurant").prefetch_related("operating_hours").order_by("name")
+    queryset = (
+        Branch.objects.filter(is_active=True, restaurant__is_active=True)
+        .select_related("restaurant")
+        .prefetch_related("operating_hours")
+        .order_by("name")
+    )
     serializer_class = BranchSerializer
     permission_classes = [AllowAny]
     filterset_fields = ["restaurant"]
-
-
-from apps.common.scoping import staff_branches
-from apps.users.permissions import DomainPermission
 
 
 class StaffBranchViewSet(ReadOnlyModelViewSet):
@@ -30,4 +35,9 @@ class StaffBranchViewSet(ReadOnlyModelViewSet):
     def get_queryset(self):
         if getattr(self, "swagger_fake_view", False):
             return Branch.objects.none()
-        return staff_branches(self.request.user).select_related("restaurant").prefetch_related("operating_hours").order_by("name")
+        return (
+            staff_branches(self.request.user)
+            .select_related("restaurant")
+            .prefetch_related("operating_hours")
+            .order_by("name")
+        )

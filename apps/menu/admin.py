@@ -1,6 +1,8 @@
 from django.contrib import admin
+
 from apps.common.admin import DomainAdmin
-from .models import MenuCategory, MenuItem, MenuModifier, MenuItemModifier
+
+from .models import MenuCategory, MenuItem, MenuItemModifier, MenuModifier
 
 
 class ModifierInline(admin.TabularInline):

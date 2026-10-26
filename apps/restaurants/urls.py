@@ -1,5 +1,7 @@
 from rest_framework.routers import DefaultRouter
-from .views import RestaurantViewSet, BranchViewSet, StaffBranchViewSet
+
+from .views import BranchViewSet, RestaurantViewSet, StaffBranchViewSet
+
 router = DefaultRouter()
 router.register("restaurants", RestaurantViewSet)
 router.register("branches", BranchViewSet)

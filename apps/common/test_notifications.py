@@ -1,14 +1,21 @@
 from unittest.mock import patch
+
 from django.core import mail
 from django.db import transaction
 from django.test import TestCase
+
 from .models import Notification
-from .notifications import queue_email, dispatch_pending
+from .notifications import dispatch_pending, queue_email
 
 
 class NotificationTests(TestCase):
     def queue(self):
-        return queue_email(event_key="test:1", recipient="guest@example.com", subject="Order ready", body="Your order is ready.")
+        return queue_email(
+            event_key="test:1",
+            recipient="guest@example.com",
+            subject="Order ready",
+            body="Your order is ready.",
+        )
 
     def test_deduplicated_outbox_and_delivery(self):
         self.queue()

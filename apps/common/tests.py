@@ -3,7 +3,14 @@ from django.test import TestCase
 
 class PublicInterfaceTests(TestCase):
     def test_public_pages_render(self):
-        for path in ["/", "/menu/", "/accounts/login/", "/register/", "/accounts/password_reset/", "/cart/"]:
+        for path in [
+            "/",
+            "/menu/",
+            "/accounts/login/",
+            "/register/",
+            "/accounts/password_reset/",
+            "/cart/",
+        ]:
             self.assertEqual(self.client.get(path).status_code, 200, path)
 
     def test_dashboard_requires_login(self):
@@ -14,6 +21,7 @@ class PublicInterfaceTests(TestCase):
 
     def test_customer_cannot_open_staff_operations(self):
         from django.contrib.auth import get_user_model
+
         user = get_user_model().objects.create_user(username="guest", email="guest@example.com")
         self.client.force_login(user)
         self.assertEqual(self.client.get("/staff/").status_code, 403)
