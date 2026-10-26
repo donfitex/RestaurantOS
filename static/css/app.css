@@ -9,3 +9,4 @@
 :root[data-theme="dark"] select option{background:var(--surface);color:var(--ink)}
 :root[data-theme="dark"] .theme-toggle{border-color:var(--line)}
 html{background:var(--cream);scroll-behavior:smooth}body,header,footer,.card,.filters,input,select,textarea,table,.pill,.notice,.theme-toggle{transition:background-color .18s ease,color .18s ease,border-color .18s ease}.theme-toggle:focus-visible{outline-offset:3px}@media(prefers-reduced-motion:reduce){html{scroll-behavior:auto}*,*::before,*::after{scroll-behavior:auto!important;transition-duration:.01ms!important;animation-duration:.01ms!important;animation-iteration-count:1!important}}
+:root{--action-bg:#172d28;--action-fg:#fff}:root[data-theme="dark"]{--action-bg:#f08a64;--action-fg:#172d28}button,.button{background:var(--action-bg);border-color:var(--action-bg);color:var(--action-fg)}.toast{background:var(--action-bg);color:var(--action-fg)}:root[data-theme="dark"] .brand-icon{color:var(--action-fg)}
