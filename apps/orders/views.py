@@ -55,7 +55,7 @@ class OrderViewSet(mixins.ListModelMixin, mixins.RetrieveModelMixin, viewsets.Ge
             raise PermissionDenied("Your role cannot cancel orders.")
         if request.user.role == "CUSTOMER" and order.status != "PENDING":
             raise PermissionDenied("Only pending orders can be cancelled by customers.")
-        return Response(OrderSerializer(transition_order(order, "CANCELLED")).data)
+        return Response(OrderSerializer(transition_order(order, "CANCELLED", allowed_current={"PENDING"} if request.user.role == "CUSTOMER" and not is_admin(request.user) else None)).data)
 
     @action(detail=False, methods=["get"])
     def kitchen(self, request):

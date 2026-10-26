@@ -80,8 +80,10 @@ def create_order(*, customer, branch, items, order_type="TAKEAWAY", table=None, 
 
 
 @transaction.atomic
-def transition_order(order, target):
+def transition_order(order, target, *, allowed_current=None):
     order = Order.objects.select_for_update().get(pk=order.pk)
+    if allowed_current is not None and order.status not in allowed_current:
+        raise Conflict("The order status changed; this operation is no longer allowed.")
     if order.status == target:
         return order
     transitions = {"PENDING": {"CONFIRMED", "CANCELLED"}, "CONFIRMED": {"PREPARING", "CANCELLED"}, "PREPARING": {"READY"}, "READY": {"SERVED", "COMPLETED"}, "SERVED": {"COMPLETED"}}
