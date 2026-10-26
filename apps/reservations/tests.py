@@ -51,3 +51,15 @@ class AvailabilityTests(TestCase):
         from rest_framework.exceptions import ValidationError as APIValidationError
         with self.assertRaises(APIValidationError):
             self.book(time(7), time(8))
+
+    def test_api_ownership_and_duplicate_booking(self):
+        from rest_framework.test import APIClient
+        client = APIClient()
+        client.force_authenticate(self.user)
+        data = {"branch": self.branch.pk, "table": self.table.pk, "guest_count": 2, "reservation_date": str(self.day), "start_time": "12:00", "end_time": "13:00"}
+        first = client.post("/api/v1/reservations/", data)
+        self.assertEqual(first.status_code, 201, first.data)
+        self.assertEqual(client.post("/api/v1/reservations/", data).status_code, 409)
+        other = get_user_model().objects.create_user(username="other", email="other@example.com")
+        client.force_authenticate(other)
+        self.assertEqual(client.get(f"/api/v1/reservations/{first.data['id']}/").status_code, 404)

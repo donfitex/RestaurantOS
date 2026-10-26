@@ -19,6 +19,7 @@ from django.contrib import admin
 from django.urls import path, include
 
 urlpatterns = [
+    path("api/v1/", include("apps.reservations.urls")),
     path("api/v1/", include("apps.tables.urls")),
     path("api/v1/menu/", include("apps.menu.urls")),
     path("api/v1/", include("apps.restaurants.urls")),
