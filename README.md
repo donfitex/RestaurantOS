@@ -53,5 +53,7 @@ Run PostgreSQL tests with `DJANGO_SETTINGS_MODULE=config.testing_postgres` and a
 - [Deployment](docs/deployment.md)
 - [Restaurant operations](docs/restaurant-operations.md)
 - [Plan progress](docs/PROGRESS.md)
+- [Verified local deployment](docs/local-deployment.md)
+- [Release audit](docs/release-audit.md)
 
 Payment records are a staff-verified ledger; a live payment provider is an integration boundary. Local email uses the console backend. Configure SMTP for real notification delivery.
