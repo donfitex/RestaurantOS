@@ -4,7 +4,7 @@ The root `render.yaml` Blueprint creates one free Render Docker web service and 
 
 ## Configure Neon
 
-The Django application already uses `dj-database-url` and `psycopg` to connect to PostgreSQL. Use the pooled Neon `DATABASE_URL` for web traffic and keep it in an ignored environment file or a secret manager. Never commit the connection string.
+The Django application already uses `dj-database-url` and `psycopg` to connect to PostgreSQL. Use the pooled Neon `DATABASE_URL` for web traffic and the direct `DATABASE_URL_UNPOOLED` for schema migrations. Keep both in ignored environment files or a secret manager; never commit either connection string. The Render startup command temporarily selects the direct URL for migrations, then Gunicorn uses the pooled URL.
 
 ```powershell
 npm.cmd install --global neon@latest
@@ -18,9 +18,9 @@ The Neon CLI's project setup also configures its Codex integration. If browser s
 ## Apply the Render Blueprint
 
 1. Open the Render Dashboard and create a Blueprint from `donfitex/RestaurantOS` on `main`.
-2. Select the Free plan and provide the pooled Neon `DATABASE_URL` when prompted. Do not include the URL in source control or a public issue.
+2. Select the Free plan and provide both Neon connection strings when prompted: pooled `DATABASE_URL` and direct `DATABASE_URL_UNPOOLED`. Do not include either URL in source control or a public issue.
 3. Apply the Blueprint and wait for the Docker build and deploy. The startup command runs Django migrations before Gunicorn starts.
-4. Check `/health/`. Free Render services do not provide an interactive shell, so create the first administrator from a local checkout after Neon has deployed the schema: run `python manage.py migrate` and `python manage.py createsuperuser` with the Neon `DATABASE_URL` available in the ignored `.env`. Configure the restaurant and its real data in the admin site.
+4. Check `/health/`. Free Render services do not provide an interactive shell, so create the first administrator from a local checkout after Neon has deployed the schema: run `python manage.py migrate` with `DATABASE_URL_UNPOOLED` as `DATABASE_URL`, then run `python manage.py createsuperuser` with the pooled `DATABASE_URL`. Configure the restaurant and its real data in the admin site.
 
 Render supplies the `onrender.com` hostname and TLS. `config.production` adds the assigned hostname and HTTPS origin at runtime.
 
