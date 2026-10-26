@@ -13,7 +13,7 @@ projects:
             numInstances: 1
             autoDeployTrigger: checksPass
             healthCheckPath: /health/
-            dockerCommand: sh -c 'DATABASE_URL="${DATABASE_URL_UNPOOLED:-$DATABASE_URL}" python manage.py migrate --noinput && exec gunicorn config.wsgi:application --config gunicorn.conf.py'
+            dockerCommand: python scripts/render_start.py
             envVars:
               - key: DJANGO_SETTINGS_MODULE
                 value: config.production
