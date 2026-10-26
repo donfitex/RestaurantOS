@@ -1,5 +1,6 @@
 from rest_framework.routers import DefaultRouter
-from .views import TableViewSet
+from django.urls import path
+from .views import TableViewSet, PublicTableView
 router = DefaultRouter()
 router.register("tables", TableViewSet)
-urlpatterns = router.urls
+urlpatterns = [path("public-tables/", PublicTableView.as_view())] + router.urls

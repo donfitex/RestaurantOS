@@ -43,3 +43,18 @@ def register(request):
 @login_required
 def customer_dashboard(request):
     return render(request, "public/dashboard.html")
+
+
+from django.views.decorators.csrf import ensure_csrf_cookie
+
+
+@ensure_csrf_cookie
+def cart(request):
+    return render(request, "public/cart.html")
+
+
+@login_required
+def order_confirmation(request, pk):
+    from apps.orders.models import Order
+    order = get_object_or_404(Order, pk=pk, customer=request.user)
+    return render(request, "public/order_confirmation.html", {"order": order})
