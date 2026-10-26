@@ -53,3 +53,25 @@ class StaffViewSet(viewsets.ReadOnlyModelViewSet):
     permission_classes = [AdministratorOnly]
     filterset_fields = ["role", "is_active"]
     search_fields = ["username", "email", "first_name", "last_name"]
+
+
+class CustomerViewSet(viewsets.ReadOnlyModelViewSet):
+    serializer_class = ProfileSerializer
+    permission_classes = [AdministratorOnly]
+    queryset = get_user_model().objects.filter(role="CUSTOMER").order_by("username")
+    search_fields = ["username", "email", "phone"]
+
+
+class CustomerHistoryView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request):
+        from apps.orders.models import Order
+        from apps.reservations.models import Reservation
+        from django.db.models import Sum
+        from apps.payments.models import Payment
+        orders = Order.objects.filter(customer=request.user)
+        reservations = Reservation.objects.filter(customer=request.user)
+        payments = Payment.objects.filter(order__customer=request.user, status__in=["PAID", "PARTIALLY_REFUNDED"])
+        from django.db.models import F
+        return Response({"profile": ProfileSerializer(request.user).data, "order_count": orders.count(), "reservation_count": reservations.count(), "net_paid": str(payments.aggregate(total=Sum(F("amount") - F("refunded_amount")))["total"] or 0), "orders_url": "/api/v1/orders/", "reservations_url": "/api/v1/reservations/", "payments_url": "/api/v1/payments/"})

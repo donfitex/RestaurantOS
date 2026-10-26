@@ -26,3 +26,12 @@ class AuthenticationTests(TestCase):
     def test_login_requires_csrf(self):
         client = APIClient(enforce_csrf_checks=True)
         self.assertEqual(client.post("/api/v1/auth/login/", {"username": "a", "password": "b"}).status_code, 403)
+
+    def test_customer_history_is_personal(self):
+        user = get_user_model().objects.create_user(username="history", email="history@example.com")
+        self.client.force_authenticate(user)
+        response = self.client.get("/api/v1/auth/history/")
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.data["profile"]["id"], user.pk)
+        self.assertEqual(response.data["order_count"], 0)
+        self.assertEqual(self.client.get("/api/v1/auth/customers/").status_code, 403)
