@@ -1937,9 +1937,8 @@ components:
           type: boolean
         preparation_time:
           type: integer
-          maximum: 9223372036854775807
+          maximum: 32767
           minimum: 0
-          format: int64
         modifiers:
           type: array
           items:
@@ -2208,9 +2207,8 @@ components:
           maxLength: 160
         quantity:
           type: integer
-          maximum: 9223372036854775807
+          maximum: 32767
           minimum: 1
-          format: int64
         unit_price:
           type: string
           format: decimal
@@ -2634,9 +2632,8 @@ components:
           maxLength: 20
         capacity:
           type: integer
-          maximum: 9223372036854775807
+          maximum: 32767
           minimum: 1
-          format: int64
         location:
           type: string
           maxLength: 120
@@ -2913,9 +2910,8 @@ components:
           type: integer
         guest_count:
           type: integer
-          maximum: 9223372036854775807
+          maximum: 32767
           minimum: 1
-          format: int64
         reservation_date:
           type: string
           format: date
@@ -2961,9 +2957,8 @@ components:
           type: integer
         guest_count:
           type: integer
-          maximum: 9223372036854775807
+          maximum: 32767
           minimum: 1
-          format: int64
         reservation_date:
           type: string
           format: date
@@ -3103,9 +3098,8 @@ components:
           maxLength: 20
         capacity:
           type: integer
-          maximum: 9223372036854775807
+          maximum: 32767
           minimum: 1
-          format: int64
         location:
           type: string
           maxLength: 120
@@ -3132,9 +3126,8 @@ components:
           maxLength: 20
         capacity:
           type: integer
-          maximum: 9223372036854775807
+          maximum: 32767
           minimum: 1
-          format: int64
         location:
           type: string
           maxLength: 120

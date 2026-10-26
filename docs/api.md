@@ -1,6 +1,6 @@
 # API v1
 
-Open `/api/docs/` for self-hosted interactive documentation and `/api/schema/` for OpenAPI. The checked-in openapi.yaml is generated with `python manage.py spectacular --file docs/openapi.yaml --validate --fail-on-warn`.
+Open `/api/docs/` for self-hosted interactive documentation and `/api/schema/` for OpenAPI. The checked-in openapi.yaml is generated with `python manage.py spectacular --settings=config.testing_postgres --file docs/openapi.yaml --validate --fail-on-warn`.
 
 Authentication: GET /api/v1/auth/login/ obtains a CSRF cookie/token. POST the username/password with the X-CSRFToken header and retain the session cookie. Unsafe authenticated requests require CSRF. Session failures return 403. Validation returns 400, scoped missing objects 404, conflicting workflow/stock 409, and rate limits 429. Responses use JSON. Model lists return count, next, previous, results; default page size is 25.
 

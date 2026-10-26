@@ -55,6 +55,22 @@ jobs:
   browser:
     runs-on: ubuntu-latest
     timeout-minutes: 15
+    services:
+      postgres:
+        image: postgres:17-alpine
+        env:
+          POSTGRES_DB: restaurant
+          POSTGRES_USER: restaurant
+          POSTGRES_PASSWORD: ci-only-password
+        ports: ['5432:5432']
+        options: >-
+          --health-cmd "pg_isready -U restaurant -d restaurant"
+          --health-interval 5s --health-timeout 5s --health-retries 10
+    env:
+      DJANGO_SETTINGS_MODULE: config.testing_postgres
+      DATABASE_URL: postgresql://restaurant:ci-only-password@localhost:5432/restaurant
+      SECRET_KEY: ci-only-ABCDEFGHIJKLMN-abcdefghijklmn-0123456789-local-test-key
+      ALLOWED_HOSTS: localhost,127.0.0.1
     steps:
       - uses: actions/checkout@v7
         with:

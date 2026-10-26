@@ -45,4 +45,6 @@ document.addEventListener("DOMContentLoaded", async () => {
     } catch (error) {document.getElementById("checkout-error").textContent = error.message; button.disabled = false; button.textContent = "Place order";}
   };
   document.getElementById("checkout").addEventListener("change", () => localStorage.removeItem("restaurant-checkout-key"));
+  const placeButton = document.getElementById("place-order");
+  if (placeButton) placeButton.disabled = !cart.length || !branch;
 });

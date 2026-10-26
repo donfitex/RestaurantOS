@@ -15,7 +15,7 @@ pytestmark = [pytest.mark.django_db(transaction=True), pytest.mark.e2e]
 
 
 @pytest.fixture
-def browser_page(live_server):
+def browser_page(live_server, request):
     from contextlib import contextmanager
 
     @contextmanager
@@ -34,8 +34,10 @@ def browser_page(live_server):
                 from pathlib import Path
 
                 Path(".local/e2e").mkdir(parents=True, exist_ok=True)
-                page.screenshot(path=".local/e2e/latest.png", full_page=True)
-                Path(".local/e2e/latest.html").write_text(page.content(), encoding="utf-8")
+                page.screenshot(path=f".local/e2e/{request.node.name}.png", full_page=True)
+                Path(f".local/e2e/{request.node.name}.html").write_text(
+                    page.content(), encoding="utf-8"
+                )
                 browser.close()
 
     return open_browser, live_server.url
