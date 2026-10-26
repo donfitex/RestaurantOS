@@ -89,7 +89,6 @@ def test_customer_registration_order_and_reservation(browser_page):
 
 def test_staff_order_kitchen_and_inventory_workflow(browser_page):
     from apps.orders.services import create_order
-    from apps.payments.services import record_payment
 
     open_browser, base = browser_page
     item = MenuItemFactory()
@@ -102,9 +101,6 @@ def test_staff_order_kitchen_and_inventory_workflow(browser_page):
     order = create_order(
         customer=customer, branch=item.branch, items=[{"menu_item": item.pk, "quantity": 1}]
     )
-    record_payment(
-        order=order, amount=order.total, method="CASH", reference="browser-payment", actor=manager
-    )
     with open_browser() as page:
         login(page, base, manager.username)
         page.goto(base + "/staff/")
@@ -112,6 +108,14 @@ def test_staff_order_kitchen_and_inventory_workflow(browser_page):
         page.get_by_role("button", name="CONFIRMED", exact=True).click()
         page.get_by_role("button", name="PREPARING", exact=True).click()
         page.get_by_role("button", name="READY", exact=True).click()
+        page.get_by_role("button", name="Payments", exact=True).click()
+        page.get_by_label("Order ID").fill(str(order.pk))
+        page.get_by_label("Amount").fill(str(order.total))
+        page.get_by_label("Transaction reference").fill("browser-payment")
+        page.get_by_label("Payment method").select_option("CASH")
+        page.get_by_role("button", name="Record payment", exact=True).click()
+        expect(page.get_by_text("browser-payment", exact=False)).to_be_visible()
+        page.get_by_role("button", name="Orders", exact=True).click()
         page.get_by_role("button", name="COMPLETED", exact=True).click()
         expect(page.get_by_text("COMPLETED", exact=True)).to_be_visible()
         page.get_by_role("button", name="Inventory", exact=True).click()

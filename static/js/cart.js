@@ -36,7 +36,7 @@ document.addEventListener("DOMContentLoaded", async () => {
   } catch (error) {parent.textContent = error.message; parent.className = "notice error";}
   const type = document.getElementById("order-type"); type.onchange = () => {document.getElementById("table-label").hidden = type.value !== "DINE_IN"; document.getElementById("address-label").hidden = type.value !== "DELIVERY";};
   document.getElementById("checkout").onsubmit = async event => {
-    event.preventDefault(); const button = document.getElementById("place-order"); if (!button || !cart.length) return; button.disabled = true; button.textContent = "Placing your order?";
+    event.preventDefault(); const button = document.getElementById("place-order"); if (!button || !cart.length) return; button.disabled = true; button.textContent = "Placing your order...";
     try {
       let key = localStorage.getItem("restaurant-checkout-key"); if (!key) {key = crypto.randomUUID(); localStorage.setItem("restaurant-checkout-key", key);}
       const payload = {branch: cart[0].branch, items: cart.map(({menu_item, quantity, modifiers, notes}) => ({menu_item, quantity, modifiers, notes})), order_type: type.value, notes: document.getElementById("order-notes").value, delivery_address: document.getElementById("delivery-address").value, request_key: key};
