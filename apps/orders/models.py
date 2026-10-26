@@ -33,6 +33,7 @@ class Order(TimestampedModel):
     notes = models.TextField(blank=True)
     delivery_address = models.TextField(blank=True)
     request_key = models.UUIDField(default=uuid.uuid4, unique=True, editable=False)
+    request_fingerprint = models.CharField(max_length=64, blank=True)
     priority = models.PositiveSmallIntegerField(default=0)
     confirmed_at = models.DateTimeField(null=True, blank=True)
     preparing_at = models.DateTimeField(null=True, blank=True)
