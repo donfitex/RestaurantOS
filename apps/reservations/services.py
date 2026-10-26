@@ -55,4 +55,7 @@ def transition_reservation(reservation, target):
         Table.objects.filter(pk=reservation.table_id).update(status=Table.Status.CLEANING)
     reservation.status = target
     reservation.save(update_fields=["status", "updated_at"])
+    if target in ["CONFIRMED", "CANCELLED"]:
+        from apps.common.notifications import notify_reservation
+        notify_reservation(reservation, target)
     return reservation

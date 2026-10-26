@@ -39,7 +39,10 @@ def record_payment(*, order, amount, method, reference, actor):
         raise Conflict("Payment exceeds the outstanding balance or the order is cancelled.")
     if method not in Payment.Method.values:
         raise ValidationError("Unsupported payment method.")
-    return Payment.objects.create(order=order, amount=amount, currency=order.currency, method=method, reference=reference, recorded_by=actor, status="PAID", paid_at=timezone.now())
+    payment = Payment.objects.create(order=order, amount=amount, currency=order.currency, method=method, reference=reference, recorded_by=actor, status="PAID", paid_at=timezone.now())
+    from apps.common.notifications import queue_email
+    queue_email(event_key=f"payment:{payment.pk}:PAID", recipient=order.customer.email, subject=f"Payment received for order #{order.pk}", body=f"Payment of {order.currency} {amount} has been recorded. Reference: {reference}.")
+    return payment
 
 
 @transaction.atomic

@@ -99,4 +99,7 @@ def transition_order(order, target):
         setattr(order, timestamp, timezone.now())
         fields.append(timestamp)
     order.save(update_fields=fields)
+    if target in ["CONFIRMED", "READY", "CANCELLED"]:
+        from apps.common.notifications import notify_order
+        notify_order(order, target)
     return order

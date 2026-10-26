@@ -15,3 +15,18 @@ class ActiveModel(TimestampedModel):
 
     class Meta(TimestampedModel.Meta):
         abstract = True
+
+
+class Notification(TimestampedModel):
+    event_key = models.CharField(max_length=200)
+    recipient = models.EmailField()
+    subject = models.CharField(max_length=200)
+    body = models.TextField()
+    status = models.CharField(max_length=10, default="PENDING", db_index=True)
+    attempts = models.PositiveSmallIntegerField(default=0)
+    sent_at = models.DateTimeField(null=True, blank=True)
+    next_attempt_at = models.DateTimeField(null=True, blank=True)
+    last_error = models.CharField(max_length=200, blank=True)
+
+    class Meta:
+        constraints = [models.UniqueConstraint(fields=["event_key", "recipient"], name="unique_notification_recipient")]

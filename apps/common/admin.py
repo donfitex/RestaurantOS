@@ -34,3 +34,13 @@ class LedgerAdmin(DomainAdmin):
 
     def get_readonly_fields(self, request, obj=None):
         return tuple(field.name for field in self.model._meta.fields)
+
+
+from .models import Notification
+
+
+@admin.register(Notification)
+class NotificationAdmin(LedgerAdmin):
+    list_display = ("id", "subject", "status", "attempts", "sent_at")
+    list_filter = ("status", "created_at")
+    search_fields = ("event_key", "subject")
