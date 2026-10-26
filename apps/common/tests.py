@@ -1,3 +1,10 @@
 from django.test import TestCase
 
-# Create your tests here.
+
+class PublicInterfaceTests(TestCase):
+    def test_public_pages_render(self):
+        for path in ["/", "/menu/", "/accounts/login/", "/register/", "/accounts/password_reset/"]:
+            self.assertEqual(self.client.get(path).status_code, 200, path)
+
+    def test_dashboard_requires_login(self):
+        self.assertEqual(self.client.get("/my/").status_code, 302)

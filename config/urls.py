@@ -19,6 +19,7 @@ from django.contrib import admin
 from django.urls import path, include
 
 urlpatterns = [
+    path("", include("apps.common.urls")),
     path("api/v1/reports/", include("apps.reports.urls")),
     path("api/v1/", include("apps.payments.urls")),
     path("api/v1/", include("apps.inventory.urls")),
