@@ -66,6 +66,15 @@ def record_payment(*, order, amount, method, reference, actor):
         subject=f"Payment received for order #{order.pk}",
         body=f"Payment of {order.currency} {amount} has been recorded. Reference: {reference}.",
     )
+    from apps.common.audit import record_event
+
+    record_event(
+        "payment.recorded",
+        payment,
+        actor=actor,
+        branch=order.branch,
+        metadata={"amount": str(amount), "currency": order.currency},
+    )
     return payment
 
 
@@ -89,4 +98,13 @@ def refund_payment(*, payment, amount, reference, reason, actor):
         "REFUNDED" if payment.refunded_amount == payment.amount else "PARTIALLY_REFUNDED"
     )
     payment.save(update_fields=["refunded_amount", "status", "updated_at"])
+    from apps.common.audit import record_event
+
+    record_event(
+        "payment.refunded",
+        refund,
+        actor=actor,
+        branch=payment.order.branch,
+        metadata={"amount": str(amount)},
+    )
     return refund

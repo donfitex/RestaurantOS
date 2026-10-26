@@ -80,7 +80,7 @@ def create_reservation(
         .exists()
     ):
         raise Conflict("The table is unavailable for this time and party size.")
-    return Reservation.objects.create(
+    reservation = Reservation.objects.create(
         customer=customer,
         branch=table.branch,
         table=table,
@@ -92,10 +92,14 @@ def create_reservation(
         guest_name=guest_name,
         guest_phone=guest_phone,
     )
+    from apps.common.audit import record_event
+
+    record_event("reservation.created", reservation, actor=customer, branch=table.branch)
+    return reservation
 
 
 @transaction.atomic
-def transition_reservation(reservation, target):
+def transition_reservation(reservation, target, *, actor=None):
     Table.objects.select_for_update().get(pk=reservation.table_id)
     reservation = Reservation.objects.select_for_update().get(pk=reservation.pk)
     if reservation.status == target:
@@ -115,8 +119,18 @@ def transition_reservation(reservation, target):
         table.save(update_fields=["status", "updated_at"])
     elif target == "COMPLETED":
         Table.objects.filter(pk=reservation.table_id).update(status=Table.Status.CLEANING)
+    previous_status = reservation.status
     reservation.status = target
     reservation.save(update_fields=["status", "updated_at"])
+    from apps.common.audit import record_event
+
+    record_event(
+        "reservation.status_changed",
+        reservation,
+        actor=actor,
+        branch=reservation.branch,
+        metadata={"from": previous_status, "to": target},
+    )
     if target in ["CONFIRMED", "CANCELLED"]:
         from apps.common.notifications import notify_reservation
 

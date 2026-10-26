@@ -2,7 +2,7 @@ from django.contrib import admin
 
 from apps.users.permissions import is_admin
 
-from .models import Notification
+from .models import AuditEvent, Notification
 
 
 class AdministratorAccess:
@@ -45,3 +45,10 @@ class NotificationAdmin(LedgerAdmin):
     list_display = ("id", "subject", "status", "attempts", "sent_at")
     list_filter = ("status", "created_at")
     search_fields = ("event_key", "subject")
+
+
+@admin.register(AuditEvent)
+class AuditEventAdmin(LedgerAdmin):
+    list_display = ("created_at", "event", "branch", "actor", "object_type", "object_id")
+    list_filter = ("event", "branch", "created_at")
+    search_fields = ("object_id", "event")

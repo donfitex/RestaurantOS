@@ -40,3 +40,22 @@ class RateLimitBucket(models.Model):
     key = models.CharField(max_length=64, primary_key=True)
     count = models.PositiveIntegerField(default=0)
     expires_at = models.DateTimeField(db_index=True)
+
+
+class WorkerHeartbeat(models.Model):
+    name = models.CharField(max_length=64, primary_key=True)
+    last_seen_at = models.DateTimeField()
+
+
+class AuditEvent(TimestampedModel):
+    actor = models.ForeignKey("users.User", on_delete=models.SET_NULL, null=True, blank=True)
+    branch = models.ForeignKey(
+        "restaurants.Branch", on_delete=models.PROTECT, null=True, blank=True
+    )
+    event = models.CharField(max_length=80, db_index=True)
+    object_type = models.CharField(max_length=40)
+    object_id = models.CharField(max_length=40)
+    metadata = models.JSONField(default=dict)
+
+    class Meta:
+        indexes = [models.Index(fields=["branch", "created_at"])]

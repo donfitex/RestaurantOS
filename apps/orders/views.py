@@ -68,7 +68,9 @@ class OrderViewSet(mixins.ListModelMixin, mixins.RetrieveModelMixin, viewsets.Ge
             }
             if target not in allowed.get(request.user.role, set()):
                 raise PermissionDenied("Your role cannot perform this transition.")
-        return Response(OrderSerializer(transition_order(self.get_object(), target)).data)
+        return Response(
+            OrderSerializer(transition_order(self.get_object(), target, actor=request.user)).data
+        )
 
     @action(detail=True, methods=["post"])
     def cancel(self, request, pk=None):
@@ -86,6 +88,7 @@ class OrderViewSet(mixins.ListModelMixin, mixins.RetrieveModelMixin, viewsets.Ge
                 transition_order(
                     order,
                     "CANCELLED",
+                    actor=request.user,
                     allowed_current={"PENDING"}
                     if request.user.role == "CUSTOMER" and not is_admin(request.user)
                     else None,

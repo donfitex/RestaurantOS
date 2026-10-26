@@ -12,6 +12,7 @@ x-app: &app
     EMAIL_PORT: ${EMAIL_PORT:-587}
     EMAIL_HOST_USER: ${EMAIL_HOST_USER:-}
     EMAIL_HOST_PASSWORD: ${EMAIL_HOST_PASSWORD:-}
+    REQUIRE_NOTIFICATION_WORKER: "true"
     DEFAULT_FROM_EMAIL: ${DEFAULT_FROM_EMAIL:-restaurant@localhost}
   volumes:
     - media_data:/app/media
@@ -55,7 +56,7 @@ services:
         condition: service_completed_successfully
     restart: unless-stopped
     healthcheck:
-      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8000/', timeout=5)"]
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8000/health/', timeout=5)"]
       interval: 30s
       timeout: 10s
       retries: 3

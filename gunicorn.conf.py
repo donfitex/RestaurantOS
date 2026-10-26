@@ -16,3 +16,5 @@ capture_output = True
 preload_app = False
 worker_tmp_dir = "/dev/shm"
 forwarded_allow_ips = os.getenv("FORWARDED_ALLOW_IPS", "127.0.0.1")
+
+access_log_format = "%({x-request-id}o)s %(m)s %(s)s %(L)s"

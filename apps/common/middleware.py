@@ -1,3 +1,7 @@
+import logging
+import time
+from uuid import uuid4
+
 from django.conf import settings
 from django.http import JsonResponse
 
@@ -7,6 +11,8 @@ class SecurityPolicyMiddleware:
         self.get_response = get_response
 
     def __call__(self, request):
+        request.request_id = str(uuid4())
+        started = time.perf_counter()
         if request.method == "POST" and request.path in [
             "/accounts/login/",
             "/accounts/password_reset/",
@@ -26,7 +32,21 @@ class SecurityPolicyMiddleware:
                 )
                 response["Retry-After"] = "60"
                 return self.headers(response)
-        return self.headers(self.get_response(request))
+        response = self.headers(self.get_response(request))
+        response["X-Request-ID"] = request.request_id
+        route = getattr(getattr(request, "resolver_match", None), "route", "unmatched")
+        logging.getLogger("restaurantos.requests").info(
+            "request_completed",
+            extra={
+                "request_id": request.request_id,
+                "method": request.method,
+                "route": route,
+                "status_code": response.status_code,
+                "duration_ms": round((time.perf_counter() - started) * 1000, 2),
+                "user_id": getattr(getattr(request, "user", None), "pk", None),
+            },
+        )
+        return response
 
     def headers(self, response):
         response.setdefault(

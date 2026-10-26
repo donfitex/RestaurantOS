@@ -20,7 +20,7 @@ def apply_movement(stock, delta, kind, *, actor=None, order=None, notes="", refe
         raise ValidationError("Stock movements must have a nonzero quantity.")
     stock.quantity = balance
     stock.save(update_fields=["quantity", "updated_at"])
-    return StockMovement.objects.create(
+    movement = StockMovement.objects.create(
         inventory_item=stock,
         kind=kind,
         quantity=delta,
@@ -30,6 +30,16 @@ def apply_movement(stock, delta, kind, *, actor=None, order=None, notes="", refe
         notes=notes,
         reference=reference,
     )
+    from apps.common.audit import record_event
+
+    record_event(
+        "inventory.movement",
+        movement,
+        actor=actor,
+        branch=stock.branch,
+        metadata={"kind": kind, "quantity": str(delta), "balance": str(balance)},
+    )
+    return movement
 
 
 @transaction.atomic

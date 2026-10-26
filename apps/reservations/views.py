@@ -64,7 +64,9 @@ class ReservationViewSet(
     @action(detail=True, methods=["post"])
     def cancel(self, request, pk=None):
         return Response(
-            self.get_serializer(transition_reservation(self.get_object(), "CANCELLED")).data
+            self.get_serializer(
+                transition_reservation(self.get_object(), "CANCELLED", actor=request.user)
+            ).data
         )
 
     def partial_update(self, request, pk=None):
@@ -78,4 +80,8 @@ class ReservationViewSet(
         target = request.data["status"]
         if not isinstance(target, str) or target not in Reservation.Status.values:
             raise ValidationError({"status": "Choose a valid reservation status."})
-        return Response(self.get_serializer(transition_reservation(reservation, target)).data)
+        return Response(
+            self.get_serializer(
+                transition_reservation(reservation, target, actor=request.user)
+            ).data
+        )

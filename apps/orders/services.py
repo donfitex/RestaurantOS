@@ -159,11 +159,14 @@ def create_order(
                 for m in modifiers
             ]
         )
+    from apps.common.audit import record_event
+
+    record_event("order.created", order, actor=customer, branch=branch)
     return order
 
 
 @transaction.atomic
-def transition_order(order, target, *, allowed_current=None):
+def transition_order(order, target, *, allowed_current=None, actor=None):
     order = Order.objects.select_for_update().get(pk=order.pk)
     if allowed_current is not None and order.status not in allowed_current:
         raise Conflict("The order status changed; this operation is no longer allowed.")
@@ -197,12 +200,22 @@ def transition_order(order, target, *, allowed_current=None):
         "READY": "ready_at",
         "COMPLETED": "completed_at",
     }.get(target)
+    previous_status = order.status
     order.status = target
     fields = ["status", "updated_at"]
     if timestamp:
         setattr(order, timestamp, timezone.now())
         fields.append(timestamp)
     order.save(update_fields=fields)
+    from apps.common.audit import record_event
+
+    record_event(
+        "order.status_changed",
+        order,
+        actor=actor,
+        branch=order.branch,
+        metadata={"from": previous_status, "to": target},
+    )
     if target in ["CONFIRMED", "READY", "CANCELLED"]:
         from apps.common.notifications import notify_order
 

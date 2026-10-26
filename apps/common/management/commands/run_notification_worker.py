@@ -25,6 +25,14 @@ class Command(BaseCommand):
         while not stopped.is_set():
             try:
                 count = dispatch_pending()
+                from django.utils import timezone
+
+                from apps.common.models import RateLimitBucket, WorkerHeartbeat
+
+                WorkerHeartbeat.objects.update_or_create(
+                    name="notifications", defaults={"last_seen_at": timezone.now()}
+                )
+                RateLimitBucket.objects.filter(expires_at__lt=timezone.now()).delete()
                 logger.info("notification_batch_completed", extra={"sent_count": count})
             except Exception:
                 logger.exception("notification_worker_error")

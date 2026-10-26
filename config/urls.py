@@ -20,8 +20,11 @@ from django.urls import include, path
 from drf_spectacular.views import SpectacularAPIView, SpectacularSwaggerSplitView
 
 from apps.common import schema  # noqa: F401
+from apps.common.health import liveness, readiness
 
 urlpatterns = [
+    path("health/", readiness, name="health"),
+    path("health/live/", liveness, name="liveness"),
     path("api/schema/", SpectacularAPIView.as_view(), name="schema"),
     path("api/docs/", SpectacularSwaggerSplitView.as_view(url_name="schema"), name="api_docs"),
     path("", include("apps.common.urls")),
