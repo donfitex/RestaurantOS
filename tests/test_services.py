@@ -92,3 +92,32 @@ def test_unavailable_menu_item_creates_no_order():
             items=[{"menu_item": item.pk, "quantity": 1}],
         )
     assert not Order.objects.exists()
+
+
+def test_stock_ledger_records_the_confirming_staff_actor():
+    item = MenuItemFactory()
+    stock = InventoryFactory(branch=item.branch)
+    recipe = Recipe.objects.create(menu_item=item)
+    RecipeIngredient.objects.create(recipe=recipe, ingredient=stock.ingredient, quantity="1")
+    manager = UserFactory(role="MANAGER")
+    order = create_order(
+        customer=UserFactory(), branch=item.branch, items=[{"menu_item": item.pk, "quantity": 1}]
+    )
+    transition_order(order, "CONFIRMED", actor=manager)
+    assert stock.movements.get(kind="SALE").actor_id == manager.pk
+    transition_order(order, "CANCELLED", actor=manager)
+    assert stock.movements.get(kind="RETURN").actor_id == manager.pk
+
+
+def test_restock_cancels_pending_low_stock_emails():
+    from apps.common.models import Notification
+    from tests.factories import BranchFactory
+
+    branch = BranchFactory()
+    manager = UserFactory(role="MANAGER")
+    branch.managers.add(manager)
+    stock = InventoryFactory(branch=branch, quantity=Decimal("0"))
+    assert Notification.objects.filter(status="PENDING").exists()
+    adjust_stock(inventory_item=stock, quantity="10", kind="PURCHASE", actor=manager)
+    assert not Notification.objects.filter(status="PENDING").exists()
+    assert Notification.objects.filter(status="CANCELLED").exists()

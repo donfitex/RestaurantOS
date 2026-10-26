@@ -157,3 +157,45 @@ def test_customer_cancellation_cannot_cancel_a_concurrently_confirmed_order():
         ("CONFIRMED", Decimal("1")),
         ("CANCELLED", Decimal("5")),
     ]
+
+
+def test_same_payment_reference_across_orders_returns_conflict():
+    item = MenuItemFactory()
+    actor = UserFactory()
+    orders = [
+        create_order(
+            customer=UserFactory(),
+            branch=item.branch,
+            items=[{"menu_item": item.pk, "quantity": 1}],
+        )
+        for _ in range(2)
+    ]
+
+    def pay(order):
+        return record_payment(
+            order=order,
+            amount=order.total,
+            method="CASH",
+            reference="shared-reference",
+            actor=actor,
+        ).pk
+
+    results = race(lambda: pay(orders[0]), lambda: pay(orders[1]))
+    assert sorted(result[0] for result in results) == ["conflict", "ok"]
+
+
+def test_same_order_request_key_across_users_returns_conflict():
+    items = [MenuItemFactory(), MenuItemFactory()]
+    users = [UserFactory(), UserFactory()]
+    key = uuid4()
+
+    def place(index):
+        return create_order(
+            customer=users[index],
+            branch=items[index].branch,
+            items=[{"menu_item": items[index].pk, "quantity": 1}],
+            request_key=key,
+        ).pk
+
+    results = race(lambda: place(0), lambda: place(1))
+    assert sorted(result[0] for result in results) == ["conflict", "ok"]

@@ -3,6 +3,7 @@ import time
 from uuid import uuid4
 
 from django.conf import settings
+from django.db import DatabaseError
 from django.http import JsonResponse
 
 
@@ -31,10 +32,15 @@ class SecurityPolicyMiddleware:
                     {"detail": "Too many authentication attempts. Try again shortly."}, status=429
                 )
                 response["Retry-After"] = "60"
+                response["X-Request-ID"] = request.request_id
                 return self.headers(response)
         response = self.headers(self.get_response(request))
         response["X-Request-ID"] = request.request_id
         route = getattr(getattr(request, "resolver_match", None), "route", "unmatched")
+        try:
+            actor_id = getattr(getattr(request, "user", None), "pk", None)
+        except DatabaseError:
+            actor_id = None
         logging.getLogger("restaurantos.requests").info(
             "request_completed",
             extra={
@@ -43,7 +49,7 @@ class SecurityPolicyMiddleware:
                 "route": route,
                 "status_code": response.status_code,
                 "duration_ms": round((time.perf_counter() - started) * 1000, 2),
-                "user_id": getattr(getattr(request, "user", None), "pk", None),
+                "user_id": actor_id,
             },
         )
         return response

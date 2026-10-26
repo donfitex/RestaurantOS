@@ -7,6 +7,7 @@ from django.utils import timezone
 from rest_framework.exceptions import ValidationError
 
 from apps.common.exceptions import Conflict
+from apps.common.transactions import insert_unique
 from apps.orders.models import Order
 
 from .models import Payment, Refund
@@ -48,7 +49,9 @@ def record_payment(*, order, amount, method, reference, actor):
         raise Conflict("Payment exceeds the outstanding balance or the order is cancelled.")
     if method not in Payment.Method.values:
         raise ValidationError("Unsupported payment method.")
-    payment = Payment.objects.create(
+    payment = insert_unique(
+        Payment.objects,
+        {"reference": reference},
         order=order,
         amount=amount,
         currency=order.currency,
@@ -90,8 +93,14 @@ def refund_payment(*, payment, amount, reference, reason, actor):
         raise Conflict("Refund reference was already used.")
     if payment.status not in SETTLED or amount > payment.amount - payment.refunded_amount:
         raise Conflict("Refund exceeds the refundable balance.")
-    refund = Refund.objects.create(
-        payment=payment, amount=amount, reference=reference, reason=reason, actor=actor
+    refund = insert_unique(
+        Refund.objects,
+        {"reference": reference},
+        payment=payment,
+        amount=amount,
+        reference=reference,
+        reason=reason,
+        actor=actor,
     )
     payment.refunded_amount += amount
     payment.status = (

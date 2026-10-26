@@ -153,6 +153,14 @@ LOGGING = {
     "formatters": {"json": {"()": "apps.common.logging.JsonFormatter"}},
     "handlers": {"console": {"class": "logging.StreamHandler", "formatter": "json"}},
     "root": {"handlers": ["console"], "level": os.getenv("LOG_LEVEL", "INFO")},
+    "loggers": {
+        "django": {
+            "handlers": ["console"],
+            "level": os.getenv("LOG_LEVEL", "INFO"),
+            "propagate": False,
+        },
+        "django.server": {"handlers": ["console"], "level": "WARNING", "propagate": False},
+    },
 }
 
 EMAIL_BACKEND = os.getenv("EMAIL_BACKEND", "django.core.mail.backends.console.EmailBackend")

@@ -7,7 +7,7 @@ class JsonFormatter(logging.Formatter):
     def format(self, record):
         event = (
             "django_request_error"
-            if record.name.startswith(("django.request", "django.security"))
+            if record.name.startswith(("django.request", "django.security", "django.server"))
             else record.getMessage()
         )
         result = {

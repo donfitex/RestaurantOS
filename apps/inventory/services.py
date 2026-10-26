@@ -43,7 +43,7 @@ def apply_movement(stock, delta, kind, *, actor=None, order=None, notes="", refe
 
 
 @transaction.atomic
-def deduct_order_stock(order):
+def deduct_order_stock(order, *, actor=None):
     if order.stock_deducted:
         return
     lines = list(order.items.all())
@@ -81,13 +81,13 @@ def deduct_order_stock(order):
         stock = stocks.get(ingredient_id)
         if stock is None:
             raise Conflict("Recipe ingredient has no inventory record at this branch.")
-        apply_movement(stock, -required, StockMovement.Kind.SALE, order=order, actor=order.customer)
+        apply_movement(stock, -required, StockMovement.Kind.SALE, order=order, actor=actor)
     order.stock_deducted = True
     order.save(update_fields=["stock_deducted", "updated_at"])
 
 
 @transaction.atomic
-def restore_order_stock(order):
+def restore_order_stock(order, *, actor=None):
     if not order.stock_deducted:
         return
     sales = list(
@@ -106,7 +106,7 @@ def restore_order_stock(order):
             -movement.quantity,
             StockMovement.Kind.RETURN,
             order=order,
-            actor=order.customer,
+            actor=actor,
             notes="Order cancellation",
         )
     order.stock_deducted = False

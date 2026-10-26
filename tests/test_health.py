@@ -49,3 +49,9 @@ def test_order_creation_has_transactional_audit_record():
     event = AuditEvent.objects.get(event="order.created", object_id=str(order.pk))
     assert event.actor_id == user.pk
     assert event.branch_id == item.branch_id
+
+
+def test_logged_in_health_request_stays_safe_when_database_is_down(api_client):
+    api_client.force_login(UserFactory())
+    with patch("apps.common.health.connection.cursor", side_effect=OperationalError("private")):
+        assert api_client.get("/health/").status_code == 503

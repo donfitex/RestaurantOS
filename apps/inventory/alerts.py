@@ -22,4 +22,10 @@ def sync_stock_alert(stock):
             from apps.common.notifications import notify_low_stock
 
             notify_low_stock(stock, alert)
+        else:
+            from apps.common.models import Notification
+
+            Notification.objects.filter(
+                event_key__startswith=f"stock:{alert.pk}:", status="PENDING"
+            ).update(status="CANCELLED")
     return alert

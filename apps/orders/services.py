@@ -8,6 +8,7 @@ from django.utils import timezone
 from rest_framework.exceptions import ValidationError
 
 from apps.common.exceptions import Conflict
+from apps.common.transactions import insert_unique
 from apps.menu.models import MenuItem
 from apps.restaurants.models import Branch
 from apps.tables.models import Table
@@ -142,7 +143,11 @@ def create_order(
     )
     if request_key:
         data["request_key"] = request_key
-    order = Order.objects.create(**data)
+    order = (
+        insert_unique(Order.objects, {"request_key": request_key}, **data)
+        if request_key
+        else Order.objects.create(**data)
+    )
     for item, quantity, unit_price, line_total, line_notes, modifiers in snapshots:
         order_item = OrderItem.objects.create(
             order=order,
@@ -191,9 +196,9 @@ def transition_order(order, target, *, allowed_current=None, actor=None):
     from apps.inventory.services import deduct_order_stock, restore_order_stock
 
     if target == "CONFIRMED":
-        deduct_order_stock(order)
+        deduct_order_stock(order, actor=actor)
     elif target == "CANCELLED":
-        restore_order_stock(order)
+        restore_order_stock(order, actor=actor)
     timestamp = {
         "CONFIRMED": "confirmed_at",
         "PREPARING": "preparing_at",
