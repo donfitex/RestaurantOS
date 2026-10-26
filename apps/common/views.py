@@ -14,7 +14,7 @@ def home(request):
 
 
 def menu(request):
-    items = MenuItem.objects.filter(is_active=True, availability=True, category__is_active=True, branch__is_active=True, branch__restaurant__is_active=True).select_related("branch", "category").prefetch_related(Prefetch("modifiers", queryset=MenuModifier.objects.filter(is_active=True)))
+    items = MenuItem.objects.filter(is_active=True, availability=True, category__is_active=True, branch__is_active=True, branch__restaurant__is_active=True).select_related("branch__restaurant", "category").prefetch_related(Prefetch("modifiers", queryset=MenuModifier.objects.filter(is_active=True)))
     search = request.GET.get("search", "").strip()
     if search:
         items = items.filter(Q(name__icontains=search) | Q(description__icontains=search))

@@ -9,5 +9,5 @@ window.OS = {
   },
   toast(message) { const el = document.getElementById("toast"); el.textContent = message; el.hidden = false; setTimeout(() => {el.hidden = true;}, 4500); },
   node(tag, text, className) { const el = document.createElement(tag); if (text !== undefined) el.textContent = text; if (className) el.className = className; return el; },
-  async pages(url) { const data = await OS.api(url); return data.results || data; }
+  async pages(url) { let result = []; while (url) {const data = await OS.api(url); if (Array.isArray(data)) return data; result.push(...data.results); url = data.next;} return result; }
 };

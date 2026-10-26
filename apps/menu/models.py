@@ -1,5 +1,6 @@
 from django.core.validators import MinValueValidator
 from django.db import models
+from django.contrib.postgres.indexes import GinIndex
 from apps.common.models import ActiveModel, TimestampedModel
 
 
@@ -29,7 +30,7 @@ class MenuItem(ActiveModel):
 
     class Meta:
         constraints = [models.UniqueConstraint(fields=["branch", "sku"], name="unique_branch_menu_sku"), models.CheckConstraint(condition=models.Q(price__gte=0), name="menu_price_nonnegative")]
-        indexes = [models.Index(fields=["branch", "availability", "category"])]
+        indexes = [models.Index(fields=["branch", "availability", "category"]), GinIndex(fields=["name"], name="menu_name_trigram", opclasses=["gin_trgm_ops"])]
 
     def clean(self):
         from django.core.exceptions import ValidationError

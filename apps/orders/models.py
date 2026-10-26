@@ -43,7 +43,7 @@ class Order(TimestampedModel):
 
     class Meta:
         constraints = [models.CheckConstraint(condition=models.Q(subtotal__gte=0, tax__gte=0, discount__gte=0, total__gte=0), name="order_amounts_nonnegative"), models.CheckConstraint(condition=models.Q(total=models.F("subtotal") + models.F("tax") - models.F("discount")), name="order_total_consistent")]
-        indexes = [models.Index(fields=["branch", "status", "created_at"]), models.Index(fields=["customer", "created_at"])]
+        indexes = [models.Index(fields=["branch", "status", "created_at"]), models.Index(fields=["customer", "created_at"]), models.Index(fields=["branch", "-priority", "created_at"], condition=models.Q(status__in=["CONFIRMED", "PREPARING", "READY"]), name="kitchen_queue_idx")]
 
 
 class OrderItem(TimestampedModel):
