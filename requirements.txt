@@ -1,1 +1,9 @@
-Django>=5.0,<6.0
+Django>=5.2.18,<5.3
+djangorestframework>=3.16,<4
+django-filter>=25,<26
+dj-database-url>=3,<4
+psycopg[binary]>=3.2,<4
+python-dotenv>=1,<2
+whitenoise>=6,<7
+gunicorn>=23,<24; sys_platform != "win32"
+Pillow>=11,<13
