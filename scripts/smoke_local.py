@@ -155,7 +155,7 @@ def main():
         expect(manager_page.get_by_text(reference, exact=False)).to_be_visible()
         manager_page.get_by_role("button", name="Orders", exact=True).click()
         order_card.get_by_role("button", name="COMPLETED", exact=True).click()
-        expect(order_card.get_by_text("COMPLETED", exact=True)).to_be_visible()
+        expect(order_card.locator("span.pill")).to_have_text("COMPLETED")
         manager_page.screenshot(path=str(artifacts / "staff-desktop.png"), full_page=True)
         assert manager.request.get(base + f"/staff/receipts/{order_id}/").status == 200
         assert api(customer, f"/api/v1/orders/{order_id}/")["status"] == "COMPLETED"

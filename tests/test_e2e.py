@@ -117,7 +117,7 @@ def test_staff_order_kitchen_and_inventory_workflow(browser_page):
         expect(page.get_by_text("browser-payment", exact=False)).to_be_visible()
         page.get_by_role("button", name="Orders", exact=True).click()
         page.get_by_role("button", name="COMPLETED", exact=True).click()
-        expect(page.get_by_text("COMPLETED", exact=True)).to_be_visible()
+        expect(page.locator("#staff-content article .pill").first).to_have_text("COMPLETED")
         page.get_by_role("button", name="Inventory", exact=True).click()
         expect(page.get_by_text(stock.ingredient.name, exact=True)).to_be_visible()
         page.set_viewport_size({"width": 390, "height": 844})

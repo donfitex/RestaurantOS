@@ -10,7 +10,7 @@ concurrency:
   cancel-in-progress: true
 jobs:
   backend:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     timeout-minutes: 20
     strategy:
       fail-fast: false
@@ -53,7 +53,7 @@ jobs:
       - run: git diff --exit-code docs/openapi.yaml
       - run: python -m pytest -m 'not e2e' --cov=apps --cov-report=term-missing --cov-fail-under=85
   browser:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     timeout-minutes: 15
     services:
       postgres:
@@ -67,6 +67,7 @@ jobs:
           --health-cmd "pg_isready -U restaurant -d restaurant"
           --health-interval 5s --health-timeout 5s --health-retries 10
     env:
+      PLAYWRIGHT_CHANNEL: chrome
       DJANGO_SETTINGS_MODULE: config.testing_postgres
       DATABASE_URL: postgresql://restaurant:ci-only-password@localhost:5432/restaurant
       SECRET_KEY: ci-only-ABCDEFGHIJKLMN-abcdefghijklmn-0123456789-local-test-key
@@ -80,11 +81,11 @@ jobs:
           python-version: '3.13'
           cache: pip
       - run: python -m pip install -r requirements-dev.txt
-      - run: python -m playwright install --with-deps chromium
+      - run: google-chrome --version
       - run: python -m pytest -m e2e
   container:
     needs: [backend, browser]
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     timeout-minutes: 20
     steps:
       - uses: actions/checkout@v7
