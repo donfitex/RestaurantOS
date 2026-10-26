@@ -44,3 +44,16 @@ class OrderServiceTests(TestCase):
     def test_invalid_transition_rejected(self):
         with self.assertRaises(Conflict):
             transition_order(self.place(), "COMPLETED")
+
+    def test_api_rejects_customer_discount_and_cross_customer_access(self):
+        from rest_framework.test import APIClient
+        client = APIClient()
+        client.force_authenticate(self.user)
+        payload = {"branch": self.branch.pk, "items": [{"menu_item": self.item.pk, "quantity": 1}], "discount": "10"}
+        self.assertEqual(client.post("/api/v1/orders/", payload, format="json").status_code, 403)
+        payload.pop("discount")
+        response = client.post("/api/v1/orders/", payload, format="json")
+        self.assertEqual(response.status_code, 201, response.data)
+        other = get_user_model().objects.create_user(username="other", email="other@example.com")
+        client.force_authenticate(other)
+        self.assertEqual(client.get(f"/api/v1/orders/{response.data['id']}/").status_code, 404)
