@@ -17,3 +17,8 @@ class DashboardTests(TestCase):
         self.assertEqual(response.status_code, 200)
         self.assertEqual(response.data["currency"], "NGN")
         self.assertEqual(response.data["orders"], 0)
+
+        report = client.get(f"/api/v1/reports/operations/?branch={branch.pk}&start_date=2030-01-01&end_date=2030-01-31")
+        self.assertEqual(report.status_code, 200)
+        self.assertEqual(report.data["orders"], [])
+        self.assertEqual(client.get(f"/api/v1/reports/operations/?branch={branch.pk}&start_date=2030-01-01&end_date=2032-01-31").status_code, 400)

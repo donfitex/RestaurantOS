@@ -22,3 +22,21 @@ class BranchReportView(APIView):
 class DashboardView(BranchReportView):
     def get(self, request):
         return Response(daily_dashboard(self.branch(request)))
+
+
+class OperationalReportView(BranchReportView):
+    def get(self, request):
+        from datetime import date
+        from .selectors import operational_report
+        branch = self.branch(request)
+        try:
+            start = date.fromisoformat(request.query_params.get("start_date", ""))
+            end = date.fromisoformat(request.query_params.get("end_date", ""))
+        except ValueError:
+            raise ValidationError("Provide start_date and end_date in YYYY-MM-DD format.")
+        if end < start or (end - start).days > 366:
+            raise ValidationError("Report ranges must be ordered and no longer than 366 days.")
+        period = request.query_params.get("period", "day")
+        if period not in ["day", "week", "month"]:
+            raise ValidationError({"period": "Choose day, week, or month."})
+        return Response(operational_report(branch, start, end, period))
