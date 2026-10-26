@@ -73,3 +73,22 @@ class StockMovement(TimestampedModel):
     class Meta:
         constraints = [models.CheckConstraint(condition=~models.Q(quantity=0), name="movement_nonzero"), models.CheckConstraint(condition=models.Q(balance_after__gte=0), name="movement_balance_nonnegative")]
         indexes = [models.Index(fields=["inventory_item", "created_at"])]
+
+
+class Recipe(TimestampedModel):
+    menu_item = models.OneToOneField("menu.MenuItem", on_delete=models.PROTECT, related_name="recipe")
+    instructions = models.TextField(blank=True)
+
+
+class RecipeIngredient(TimestampedModel):
+    recipe = models.ForeignKey(Recipe, on_delete=models.CASCADE, related_name="ingredients")
+    ingredient = models.ForeignKey(Ingredient, on_delete=models.PROTECT)
+    quantity = models.DecimalField(max_digits=12, decimal_places=3, validators=[MinValueValidator("0.001")])
+
+    class Meta:
+        constraints = [models.UniqueConstraint(fields=["recipe", "ingredient"], name="unique_recipe_ingredient"), models.CheckConstraint(condition=models.Q(quantity__gt=0), name="recipe_quantity_positive")]
+
+    def clean(self):
+        from django.core.exceptions import ValidationError
+        if self.recipe_id and self.ingredient_id and self.recipe.menu_item.branch.restaurant_id != self.ingredient.restaurant_id:
+            raise ValidationError("Recipe ingredients must belong to the same restaurant.")
