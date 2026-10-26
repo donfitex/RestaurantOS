@@ -1,3 +1,4 @@
+from decimal import Decimal
 from django.conf import settings
 from django.core.validators import MinValueValidator
 from django.db import models
@@ -83,7 +84,7 @@ class Recipe(TimestampedModel):
 class RecipeIngredient(TimestampedModel):
     recipe = models.ForeignKey(Recipe, on_delete=models.CASCADE, related_name="ingredients")
     ingredient = models.ForeignKey(Ingredient, on_delete=models.PROTECT)
-    quantity = models.DecimalField(max_digits=12, decimal_places=3, validators=[MinValueValidator("0.001")])
+    quantity = models.DecimalField(max_digits=12, decimal_places=3, validators=[MinValueValidator(Decimal("0.001"))])
 
     class Meta:
         constraints = [models.UniqueConstraint(fields=["recipe", "ingredient"], name="unique_recipe_ingredient"), models.CheckConstraint(condition=models.Q(quantity__gt=0), name="recipe_quantity_positive")]

@@ -87,6 +87,11 @@ def transition_order(order, target):
     transitions = {"PENDING": {"CONFIRMED", "CANCELLED"}, "CONFIRMED": {"PREPARING", "CANCELLED"}, "PREPARING": {"READY"}, "READY": {"SERVED", "COMPLETED"}, "SERVED": {"COMPLETED"}}
     if target not in transitions.get(order.status, set()):
         raise Conflict("Invalid order status transition.")
+    from apps.inventory.services import deduct_order_stock, restore_order_stock
+    if target == "CONFIRMED":
+        deduct_order_stock(order)
+    elif target == "CANCELLED":
+        restore_order_stock(order)
     timestamp = {"CONFIRMED": "confirmed_at", "PREPARING": "preparing_at", "READY": "ready_at", "COMPLETED": "completed_at"}.get(target)
     order.status = target
     fields = ["status", "updated_at"]
