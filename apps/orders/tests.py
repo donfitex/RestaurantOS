@@ -57,3 +57,20 @@ class OrderServiceTests(TestCase):
         other = get_user_model().objects.create_user(username="other", email="other@example.com")
         client.force_authenticate(other)
         self.assertEqual(client.get(f"/api/v1/orders/{response.data['id']}/").status_code, 404)
+
+    def test_kitchen_roles_and_preparation_timestamps(self):
+        from rest_framework.test import APIClient
+        order = transition_order(self.place(), "CONFIRMED")
+        kitchen = get_user_model().objects.create_user(username="chef", email="chef@example.com", role="KITCHEN")
+        self.branch.staff.add(kitchen)
+        client = APIClient()
+        client.force_authenticate(kitchen)
+        self.assertEqual(client.get("/api/v1/orders/kitchen/").data["count"], 1)
+        self.assertEqual(client.patch(f"/api/v1/orders/{order.pk}/", {"status": "PREPARING"}).status_code, 200)
+        self.assertEqual(client.patch(f"/api/v1/orders/{order.pk}/", {"status": "READY"}).status_code, 200)
+        self.assertEqual(client.patch(f"/api/v1/orders/{order.pk}/", {"status": "COMPLETED"}).status_code, 403)
+        order.refresh_from_db()
+        self.assertIsNotNone(order.preparing_at)
+        self.assertIsNotNone(order.ready_at)
+        client.force_authenticate(self.user)
+        self.assertEqual(client.get("/api/v1/orders/kitchen/").status_code, 403)

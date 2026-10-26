@@ -56,3 +56,25 @@ class OrderViewSet(mixins.ListModelMixin, mixins.RetrieveModelMixin, viewsets.Ge
         if request.user.role == "CUSTOMER" and order.status != "PENDING":
             raise PermissionDenied("Only pending orders can be cancelled by customers.")
         return Response(OrderSerializer(transition_order(order, "CANCELLED")).data)
+
+    @action(detail=False, methods=["get"])
+    def kitchen(self, request):
+        if request.user.role not in ["KITCHEN", "MANAGER"] and not is_admin(request.user):
+            raise PermissionDenied("Kitchen access is restricted to kitchen staff and managers.")
+        queue = self.get_queryset().filter(status__in=["CONFIRMED", "PREPARING", "READY", "SERVED", "COMPLETED"]).order_by("-priority", "created_at")
+        page = self.paginate_queryset(queue)
+        return self.get_paginated_response(self.get_serializer(page, many=True).data)
+
+    @action(detail=True, methods=["post"])
+    def prioritize(self, request, pk=None):
+        if request.user.role != "MANAGER" and not is_admin(request.user):
+            raise PermissionDenied("Only managers may change priority.")
+        from django.db import transaction
+        with transaction.atomic():
+            order = self.get_queryset().select_for_update().get(pk=self.get_object().pk)
+            value = request.data.get("priority")
+            if isinstance(value, bool) or not isinstance(value, int) or not 0 <= value <= 10:
+                raise ValidationError({"priority": "Use an integer from zero to ten."})
+            order.priority = value
+            order.save(update_fields=["priority", "updated_at"])
+        return Response(OrderSerializer(order).data)
