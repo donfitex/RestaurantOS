@@ -20,6 +20,8 @@ class OrderViewSet(mixins.ListModelMixin, mixins.RetrieveModelMixin, viewsets.Ge
     ordering_fields = ["created_at", "total", "priority"]
 
     def get_queryset(self):
+        if getattr(self, "swagger_fake_view", False):
+            return self.queryset.none()
         qs = super().get_queryset()
         if self.request.user.role == "CUSTOMER" and not is_admin(self.request.user):
             return qs.filter(customer=self.request.user)

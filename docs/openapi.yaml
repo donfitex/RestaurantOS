@@ -1,0 +1,3170 @@
+openapi: 3.0.3
+info:
+  title: RestaurantOS API
+  version: 1.0.0
+  description: Branch-scoped restaurant operations. Session authentication and CSRF
+    are required for unsafe requests. Payments record staff-verified transactions.
+paths:
+  /api/v1/auth/customers/:
+    get:
+      operationId: v1_auth_customers_list
+      parameters:
+      - name: ordering
+        required: false
+        in: query
+        description: Which field to use when ordering the results.
+        schema:
+          type: string
+      - name: page
+        required: false
+        in: query
+        description: A page number within the paginated result set.
+        schema:
+          type: integer
+      - name: search
+        required: false
+        in: query
+        description: A search term.
+        schema:
+          type: string
+      tags:
+      - v1
+      security:
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaginatedProfileList'
+          description: ''
+  /api/v1/auth/customers/{id}/:
+    get:
+      operationId: v1_auth_customers_retrieve
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this user.
+        required: true
+      tags:
+      - v1
+      security:
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Profile'
+          description: ''
+  /api/v1/auth/history/:
+    get:
+      operationId: v1_auth_history_retrieve
+      tags:
+      - v1
+      security:
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: {}
+          description: ''
+  /api/v1/auth/login/:
+    get:
+      operationId: v1_auth_login_retrieve
+      tags:
+      - v1
+      security:
+      - cookieAuth: []
+      - {}
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: {}
+          description: ''
+    post:
+      operationId: v1_auth_login_create
+      tags:
+      - v1
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/LoginInputRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/LoginInputRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/LoginInputRequest'
+        required: true
+      security:
+      - cookieAuth: []
+      - {}
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Profile'
+          description: ''
+        '400':
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: {}
+          description: ''
+        '429':
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: {}
+          description: ''
+  /api/v1/auth/logout/:
+    post:
+      operationId: v1_auth_logout_create
+      tags:
+      - v1
+      security:
+      - cookieAuth: []
+      responses:
+        '204':
+          description: No response body
+  /api/v1/auth/profile/:
+    get:
+      operationId: v1_auth_profile_retrieve
+      tags:
+      - v1
+      security:
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Profile'
+          description: ''
+    put:
+      operationId: v1_auth_profile_update
+      tags:
+      - v1
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ProfileRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/ProfileRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/ProfileRequest'
+        required: true
+      security:
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Profile'
+          description: ''
+    patch:
+      operationId: v1_auth_profile_partial_update
+      tags:
+      - v1
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PatchedProfileRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/PatchedProfileRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/PatchedProfileRequest'
+      security:
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Profile'
+          description: ''
+  /api/v1/auth/register/:
+    post:
+      operationId: v1_auth_register_create
+      tags:
+      - v1
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RegistrationRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/RegistrationRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/RegistrationRequest'
+        required: true
+      security:
+      - cookieAuth: []
+      - {}
+      responses:
+        '201':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Registration'
+          description: ''
+  /api/v1/auth/staff/:
+    get:
+      operationId: v1_auth_staff_list
+      parameters:
+      - in: query
+        name: is_active
+        schema:
+          type: boolean
+      - name: ordering
+        required: false
+        in: query
+        description: Which field to use when ordering the results.
+        schema:
+          type: string
+      - name: page
+        required: false
+        in: query
+        description: A page number within the paginated result set.
+        schema:
+          type: integer
+      - in: query
+        name: role
+        schema:
+          type: string
+          enum:
+          - ADMIN
+          - CASHIER
+          - CUSTOMER
+          - INVENTORY_MANAGER
+          - KITCHEN
+          - MANAGER
+          - WAITER
+        description: |-
+          * `ADMIN` - Administrator
+          * `MANAGER` - Manager
+          * `CASHIER` - Cashier
+          * `WAITER` - Waiter
+          * `KITCHEN` - Kitchen
+          * `INVENTORY_MANAGER` - Inventory manager
+          * `CUSTOMER` - Customer
+      - name: search
+        required: false
+        in: query
+        description: A search term.
+        schema:
+          type: string
+      tags:
+      - v1
+      security:
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaginatedStaffList'
+          description: ''
+  /api/v1/auth/staff/{id}/:
+    get:
+      operationId: v1_auth_staff_retrieve
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this user.
+        required: true
+      tags:
+      - v1
+      security:
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Staff'
+          description: ''
+  /api/v1/branches/:
+    get:
+      operationId: v1_branches_list
+      parameters:
+      - name: ordering
+        required: false
+        in: query
+        description: Which field to use when ordering the results.
+        schema:
+          type: string
+      - name: page
+        required: false
+        in: query
+        description: A page number within the paginated result set.
+        schema:
+          type: integer
+      - in: query
+        name: restaurant
+        schema:
+          type: integer
+      - name: search
+        required: false
+        in: query
+        description: A search term.
+        schema:
+          type: string
+      tags:
+      - v1
+      security:
+      - cookieAuth: []
+      - {}
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaginatedBranchList'
+          description: ''
+  /api/v1/branches/{id}/:
+    get:
+      operationId: v1_branches_retrieve
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this branch.
+        required: true
+      tags:
+      - v1
+      security:
+      - cookieAuth: []
+      - {}
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Branch'
+          description: ''
+  /api/v1/inventory/:
+    get:
+      operationId: v1_inventory_list
+      parameters:
+      - in: query
+        name: branch
+        schema:
+          type: integer
+      - in: query
+        name: ingredient
+        schema:
+          type: integer
+      - name: ordering
+        required: false
+        in: query
+        description: Which field to use when ordering the results.
+        schema:
+          type: string
+      - name: page
+        required: false
+        in: query
+        description: A page number within the paginated result set.
+        schema:
+          type: integer
+      - name: search
+        required: false
+        in: query
+        description: A search term.
+        schema:
+          type: string
+      tags:
+      - v1
+      security:
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaginatedInventoryList'
+          description: ''
+  /api/v1/inventory/{id}/:
+    get:
+      operationId: v1_inventory_retrieve
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this inventory item.
+        required: true
+      tags:
+      - v1
+      security:
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Inventory'
+          description: ''
+  /api/v1/inventory/{id}/movements/:
+    get:
+      operationId: v1_inventory_movements_list
+      parameters:
+      - in: query
+        name: branch
+        schema:
+          type: integer
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this inventory item.
+        required: true
+      - in: query
+        name: ingredient
+        schema:
+          type: integer
+      - name: ordering
+        required: false
+        in: query
+        description: Which field to use when ordering the results.
+        schema:
+          type: string
+      - name: page
+        required: false
+        in: query
+        description: A page number within the paginated result set.
+        schema:
+          type: integer
+      - name: search
+        required: false
+        in: query
+        description: A search term.
+        schema:
+          type: string
+      tags:
+      - v1
+      security:
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaginatedMovementList'
+          description: ''
+  /api/v1/inventory/adjust/:
+    post:
+      operationId: v1_inventory_adjust_create
+      tags:
+      - v1
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AdjustmentRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/AdjustmentRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/AdjustmentRequest'
+        required: true
+      security:
+      - cookieAuth: []
+      responses:
+        '201':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Movement'
+          description: ''
+  /api/v1/inventory/low-stock/:
+    get:
+      operationId: v1_inventory_low_stock_retrieve
+      tags:
+      - v1
+      security:
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Inventory'
+          description: ''
+  /api/v1/inventory/restock/:
+    post:
+      operationId: v1_inventory_restock_create
+      tags:
+      - v1
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AdjustmentRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/AdjustmentRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/AdjustmentRequest'
+        required: true
+      security:
+      - cookieAuth: []
+      responses:
+        '201':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Movement'
+          description: ''
+  /api/v1/menu/:
+    get:
+      operationId: v1_menu_list
+      parameters:
+      - in: query
+        name: availability
+        schema:
+          type: boolean
+      - in: query
+        name: branch
+        schema:
+          type: integer
+      - in: query
+        name: category
+        schema:
+          type: integer
+      - in: query
+        name: max_price
+        schema:
+          type: number
+      - in: query
+        name: min_price
+        schema:
+          type: number
+      - name: ordering
+        required: false
+        in: query
+        description: Which field to use when ordering the results.
+        schema:
+          type: string
+      - name: page
+        required: false
+        in: query
+        description: A page number within the paginated result set.
+        schema:
+          type: integer
+      - name: search
+        required: false
+        in: query
+        description: A search term.
+        schema:
+          type: string
+      tags:
+      - v1
+      security:
+      - cookieAuth: []
+      - {}
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaginatedMenuItemList'
+          description: ''
+  /api/v1/menu/categories/:
+    get:
+      operationId: v1_menu_categories_list
+      parameters:
+      - name: ordering
+        required: false
+        in: query
+        description: Which field to use when ordering the results.
+        schema:
+          type: string
+      - name: page
+        required: false
+        in: query
+        description: A page number within the paginated result set.
+        schema:
+          type: integer
+      - in: query
+        name: restaurant
+        schema:
+          type: integer
+      - name: search
+        required: false
+        in: query
+        description: A search term.
+        schema:
+          type: string
+      tags:
+      - v1
+      security:
+      - cookieAuth: []
+      - {}
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaginatedCategoryList'
+          description: ''
+  /api/v1/menu/categories/{id}/:
+    get:
+      operationId: v1_menu_categories_retrieve
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this menu category.
+        required: true
+      tags:
+      - v1
+      security:
+      - cookieAuth: []
+      - {}
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Category'
+          description: ''
+  /api/v1/menu/items/:
+    get:
+      operationId: v1_menu_items_list
+      parameters:
+      - in: query
+        name: availability
+        schema:
+          type: boolean
+      - in: query
+        name: branch
+        schema:
+          type: integer
+      - in: query
+        name: category
+        schema:
+          type: integer
+      - in: query
+        name: max_price
+        schema:
+          type: number
+      - in: query
+        name: min_price
+        schema:
+          type: number
+      - name: ordering
+        required: false
+        in: query
+        description: Which field to use when ordering the results.
+        schema:
+          type: string
+      - name: page
+        required: false
+        in: query
+        description: A page number within the paginated result set.
+        schema:
+          type: integer
+      - name: search
+        required: false
+        in: query
+        description: A search term.
+        schema:
+          type: string
+      tags:
+      - v1
+      security:
+      - cookieAuth: []
+      - {}
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaginatedMenuItemList'
+          description: ''
+  /api/v1/menu/items/{id}/:
+    get:
+      operationId: v1_menu_items_retrieve
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this menu item.
+        required: true
+      tags:
+      - v1
+      security:
+      - cookieAuth: []
+      - {}
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MenuItem'
+          description: ''
+  /api/v1/orders/:
+    get:
+      operationId: v1_orders_list
+      parameters:
+      - in: query
+        name: branch
+        schema:
+          type: integer
+      - in: query
+        name: order_type
+        schema:
+          type: string
+          enum:
+          - DELIVERY
+          - DINE_IN
+          - TAKEAWAY
+        description: |-
+          * `DINE_IN` - Dine in
+          * `TAKEAWAY` - Takeaway
+          * `DELIVERY` - Delivery
+      - name: ordering
+        required: false
+        in: query
+        description: Which field to use when ordering the results.
+        schema:
+          type: string
+      - name: page
+        required: false
+        in: query
+        description: A page number within the paginated result set.
+        schema:
+          type: integer
+      - name: search
+        required: false
+        in: query
+        description: A search term.
+        schema:
+          type: string
+      - in: query
+        name: status
+        schema:
+          type: string
+          enum:
+          - CANCELLED
+          - COMPLETED
+          - CONFIRMED
+          - PENDING
+          - PREPARING
+          - READY
+          - SERVED
+        description: |-
+          * `PENDING` - Pending
+          * `CONFIRMED` - Confirmed
+          * `PREPARING` - Preparing
+          * `READY` - Ready
+          * `SERVED` - Served
+          * `COMPLETED` - Completed
+          * `CANCELLED` - Cancelled
+      tags:
+      - v1
+      security:
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaginatedOrderList'
+          description: ''
+    post:
+      operationId: v1_orders_create
+      tags:
+      - v1
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/OrderCreateRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/OrderCreateRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/OrderCreateRequest'
+        required: true
+      security:
+      - cookieAuth: []
+      responses:
+        '201':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Order'
+          description: ''
+        '400':
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: {}
+          description: ''
+        '403':
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: {}
+          description: ''
+        '409':
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: {}
+          description: ''
+  /api/v1/orders/{id}/:
+    get:
+      operationId: v1_orders_retrieve
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this order.
+        required: true
+      tags:
+      - v1
+      security:
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Order'
+          description: ''
+    patch:
+      operationId: v1_orders_partial_update
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this order.
+        required: true
+      tags:
+      - v1
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PatchedStatusInputRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/PatchedStatusInputRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/PatchedStatusInputRequest'
+      security:
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Order'
+          description: ''
+  /api/v1/orders/{id}/cancel/:
+    post:
+      operationId: v1_orders_cancel_create
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this order.
+        required: true
+      tags:
+      - v1
+      security:
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Order'
+          description: ''
+  /api/v1/orders/{id}/prioritize/:
+    post:
+      operationId: v1_orders_prioritize_create
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this order.
+        required: true
+      tags:
+      - v1
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PriorityInputRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/PriorityInputRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/PriorityInputRequest'
+        required: true
+      security:
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Order'
+          description: ''
+  /api/v1/orders/kitchen/:
+    get:
+      operationId: v1_orders_kitchen_list
+      parameters:
+      - in: query
+        name: branch
+        schema:
+          type: integer
+      - in: query
+        name: order_type
+        schema:
+          type: string
+          enum:
+          - DELIVERY
+          - DINE_IN
+          - TAKEAWAY
+        description: |-
+          * `DINE_IN` - Dine in
+          * `TAKEAWAY` - Takeaway
+          * `DELIVERY` - Delivery
+      - name: ordering
+        required: false
+        in: query
+        description: Which field to use when ordering the results.
+        schema:
+          type: string
+      - name: page
+        required: false
+        in: query
+        description: A page number within the paginated result set.
+        schema:
+          type: integer
+      - name: search
+        required: false
+        in: query
+        description: A search term.
+        schema:
+          type: string
+      - in: query
+        name: status
+        schema:
+          type: string
+          enum:
+          - CANCELLED
+          - COMPLETED
+          - CONFIRMED
+          - PENDING
+          - PREPARING
+          - READY
+          - SERVED
+        description: |-
+          * `PENDING` - Pending
+          * `CONFIRMED` - Confirmed
+          * `PREPARING` - Preparing
+          * `READY` - Ready
+          * `SERVED` - Served
+          * `COMPLETED` - Completed
+          * `CANCELLED` - Cancelled
+      tags:
+      - v1
+      security:
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaginatedOrderList'
+          description: ''
+  /api/v1/payments/:
+    get:
+      operationId: v1_payments_list
+      parameters:
+      - in: query
+        name: method
+        schema:
+          type: string
+          enum:
+          - CARD
+          - CASH
+          - ONLINE
+          - OTHER
+          - TRANSFER
+        description: |-
+          * `CASH` - Cash
+          * `CARD` - Card
+          * `TRANSFER` - Transfer
+          * `ONLINE` - Online
+          * `OTHER` - Other
+      - in: query
+        name: order
+        schema:
+          type: integer
+      - in: query
+        name: order__branch
+        schema:
+          type: integer
+      - name: ordering
+        required: false
+        in: query
+        description: Which field to use when ordering the results.
+        schema:
+          type: string
+      - name: page
+        required: false
+        in: query
+        description: A page number within the paginated result set.
+        schema:
+          type: integer
+      - name: search
+        required: false
+        in: query
+        description: A search term.
+        schema:
+          type: string
+      - in: query
+        name: status
+        schema:
+          type: string
+          enum:
+          - FAILED
+          - PAID
+          - PARTIALLY_REFUNDED
+          - PENDING
+          - REFUNDED
+        description: |-
+          * `PENDING` - Pending
+          * `PAID` - Paid
+          * `FAILED` - Failed
+          * `REFUNDED` - Refunded
+          * `PARTIALLY_REFUNDED` - Partially refunded
+      tags:
+      - v1
+      security:
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaginatedPaymentList'
+          description: ''
+    post:
+      operationId: v1_payments_create
+      tags:
+      - v1
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PaymentInputRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/PaymentInputRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/PaymentInputRequest'
+        required: true
+      security:
+      - cookieAuth: []
+      responses:
+        '201':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Payment'
+          description: ''
+        '409':
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: {}
+          description: ''
+  /api/v1/payments/{id}/:
+    get:
+      operationId: v1_payments_retrieve
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this payment.
+        required: true
+      tags:
+      - v1
+      security:
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Payment'
+          description: ''
+  /api/v1/payments/{id}/refund/:
+    post:
+      operationId: v1_payments_refund_create
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this payment.
+        required: true
+      tags:
+      - v1
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RefundInputRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/RefundInputRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/RefundInputRequest'
+        required: true
+      security:
+      - cookieAuth: []
+      responses:
+        '201':
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: {}
+          description: ''
+  /api/v1/public-tables/:
+    get:
+      operationId: v1_public_tables_list
+      parameters:
+      - in: query
+        name: branch
+        schema:
+          type: integer
+        required: true
+      tags:
+      - v1
+      security:
+      - cookieAuth: []
+      - {}
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/PublicTable'
+          description: ''
+  /api/v1/reports/dashboard/:
+    get:
+      operationId: v1_reports_dashboard_retrieve
+      parameters:
+      - in: query
+        name: branch
+        schema:
+          type: integer
+        required: true
+      tags:
+      - v1
+      security:
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: {}
+          description: ''
+  /api/v1/reports/operations/:
+    get:
+      operationId: v1_reports_operations_retrieve
+      parameters:
+      - in: query
+        name: branch
+        schema:
+          type: integer
+        required: true
+      - in: query
+        name: end_date
+        schema:
+          type: string
+          format: date
+        required: true
+      - in: query
+        name: period
+        schema:
+          type: string
+          enum:
+          - day
+          - month
+          - week
+      - in: query
+        name: start_date
+        schema:
+          type: string
+          format: date
+        required: true
+      tags:
+      - v1
+      security:
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: {}
+          description: ''
+  /api/v1/reservations/:
+    get:
+      operationId: v1_reservations_list
+      parameters:
+      - in: query
+        name: branch
+        schema:
+          type: integer
+      - name: ordering
+        required: false
+        in: query
+        description: Which field to use when ordering the results.
+        schema:
+          type: string
+      - name: page
+        required: false
+        in: query
+        description: A page number within the paginated result set.
+        schema:
+          type: integer
+      - in: query
+        name: reservation_date
+        schema:
+          type: string
+          format: date
+      - name: search
+        required: false
+        in: query
+        description: A search term.
+        schema:
+          type: string
+      - in: query
+        name: status
+        schema:
+          type: string
+          enum:
+          - CANCELLED
+          - COMPLETED
+          - CONFIRMED
+          - NO_SHOW
+          - PENDING
+          - SEATED
+        description: |-
+          * `PENDING` - Pending
+          * `CONFIRMED` - Confirmed
+          * `SEATED` - Seated
+          * `COMPLETED` - Completed
+          * `CANCELLED` - Cancelled
+          * `NO_SHOW` - No show
+      tags:
+      - v1
+      security:
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaginatedReservationList'
+          description: ''
+    post:
+      operationId: v1_reservations_create
+      tags:
+      - v1
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ReservationRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/ReservationRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/ReservationRequest'
+        required: true
+      security:
+      - cookieAuth: []
+      responses:
+        '201':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Reservation'
+          description: ''
+  /api/v1/reservations/{id}/:
+    get:
+      operationId: v1_reservations_retrieve
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this reservation.
+        required: true
+      tags:
+      - v1
+      security:
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Reservation'
+          description: ''
+    patch:
+      operationId: v1_reservations_partial_update
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this reservation.
+        required: true
+      tags:
+      - v1
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PatchedStatusInputRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/PatchedStatusInputRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/PatchedStatusInputRequest'
+      security:
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Reservation'
+          description: ''
+  /api/v1/reservations/{id}/cancel/:
+    post:
+      operationId: v1_reservations_cancel_create
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this reservation.
+        required: true
+      tags:
+      - v1
+      security:
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Reservation'
+          description: ''
+  /api/v1/reservations/availability/:
+    get:
+      operationId: v1_reservations_availability_list
+      parameters:
+      - in: query
+        name: branch
+        schema:
+          type: integer
+        required: true
+      - in: query
+        name: end_time
+        schema:
+          type: string
+          format: time
+        required: true
+      - in: query
+        name: guest_count
+        schema:
+          type: integer
+          maximum: 100
+          minimum: 1
+        required: true
+      - name: ordering
+        required: false
+        in: query
+        description: Which field to use when ordering the results.
+        schema:
+          type: string
+      - name: page
+        required: false
+        in: query
+        description: A page number within the paginated result set.
+        schema:
+          type: integer
+      - in: query
+        name: reservation_date
+        schema:
+          type: string
+          format: date
+        required: true
+      - name: search
+        required: false
+        in: query
+        description: A search term.
+        schema:
+          type: string
+      - in: query
+        name: start_time
+        schema:
+          type: string
+          format: time
+        required: true
+      - in: query
+        name: status
+        schema:
+          type: string
+          enum:
+          - CANCELLED
+          - COMPLETED
+          - CONFIRMED
+          - NO_SHOW
+          - PENDING
+          - SEATED
+        description: |-
+          * `PENDING` - Pending
+          * `CONFIRMED` - Confirmed
+          * `SEATED` - Seated
+          * `COMPLETED` - Completed
+          * `CANCELLED` - Cancelled
+          * `NO_SHOW` - No show
+      tags:
+      - v1
+      security:
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaginatedPublicTableList'
+          description: ''
+  /api/v1/restaurants/:
+    get:
+      operationId: v1_restaurants_list
+      parameters:
+      - name: ordering
+        required: false
+        in: query
+        description: Which field to use when ordering the results.
+        schema:
+          type: string
+      - name: page
+        required: false
+        in: query
+        description: A page number within the paginated result set.
+        schema:
+          type: integer
+      - name: search
+        required: false
+        in: query
+        description: A search term.
+        schema:
+          type: string
+      tags:
+      - v1
+      security:
+      - cookieAuth: []
+      - {}
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaginatedRestaurantList'
+          description: ''
+  /api/v1/restaurants/{id}/:
+    get:
+      operationId: v1_restaurants_retrieve
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this restaurant.
+        required: true
+      tags:
+      - v1
+      security:
+      - cookieAuth: []
+      - {}
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Restaurant'
+          description: ''
+  /api/v1/staff-branches/:
+    get:
+      operationId: v1_staff_branches_list
+      parameters:
+      - name: ordering
+        required: false
+        in: query
+        description: Which field to use when ordering the results.
+        schema:
+          type: string
+      - name: page
+        required: false
+        in: query
+        description: A page number within the paginated result set.
+        schema:
+          type: integer
+      - name: search
+        required: false
+        in: query
+        description: A search term.
+        schema:
+          type: string
+      tags:
+      - v1
+      security:
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaginatedBranchList'
+          description: ''
+  /api/v1/staff-branches/{id}/:
+    get:
+      operationId: v1_staff_branches_retrieve
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this branch.
+        required: true
+      tags:
+      - v1
+      security:
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Branch'
+          description: ''
+  /api/v1/tables/:
+    get:
+      operationId: v1_tables_list
+      parameters:
+      - in: query
+        name: branch
+        schema:
+          type: integer
+      - in: query
+        name: is_active
+        schema:
+          type: boolean
+      - name: ordering
+        required: false
+        in: query
+        description: Which field to use when ordering the results.
+        schema:
+          type: string
+      - name: page
+        required: false
+        in: query
+        description: A page number within the paginated result set.
+        schema:
+          type: integer
+      - name: search
+        required: false
+        in: query
+        description: A search term.
+        schema:
+          type: string
+      - in: query
+        name: status
+        schema:
+          type: string
+          enum:
+          - AVAILABLE
+          - CLEANING
+          - OCCUPIED
+          - OUT_OF_SERVICE
+          - RESERVED
+        description: |-
+          * `AVAILABLE` - Available
+          * `OCCUPIED` - Occupied
+          * `RESERVED` - Reserved
+          * `CLEANING` - Cleaning
+          * `OUT_OF_SERVICE` - Out of service
+      tags:
+      - v1
+      security:
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaginatedTableList'
+          description: ''
+    post:
+      operationId: v1_tables_create
+      tags:
+      - v1
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TableRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/TableRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/TableRequest'
+        required: true
+      security:
+      - cookieAuth: []
+      responses:
+        '201':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Table'
+          description: ''
+  /api/v1/tables/{id}/:
+    get:
+      operationId: v1_tables_retrieve
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this table.
+        required: true
+      tags:
+      - v1
+      security:
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Table'
+          description: ''
+    patch:
+      operationId: v1_tables_partial_update
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this table.
+        required: true
+      tags:
+      - v1
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PatchedTableRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/PatchedTableRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/PatchedTableRequest'
+      security:
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Table'
+          description: ''
+components:
+  schemas:
+    AdjustmentKindEnum:
+      enum:
+      - ADJUSTMENT
+      - WASTE
+      type: string
+      description: |-
+        * `ADJUSTMENT` - ADJUSTMENT
+        * `WASTE` - WASTE
+    AdjustmentRequest:
+      type: object
+      properties:
+        inventory_item:
+          type: integer
+          minimum: 1
+        quantity:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,11}(?:\.\d{0,3})?$
+        kind:
+          allOf:
+          - $ref: '#/components/schemas/AdjustmentKindEnum'
+          default: ADJUSTMENT
+        notes:
+          type: string
+          minLength: 1
+          maxLength: 2000
+        reference:
+          type: string
+          maxLength: 120
+      required:
+      - inventory_item
+      - notes
+      - quantity
+    Branch:
+      type: object
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        restaurant:
+          type: integer
+        name:
+          type: string
+          maxLength: 160
+        address:
+          type: string
+        phone:
+          type: string
+          maxLength: 32
+        tax_rate:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,1}(?:\.\d{0,4})?$
+        operating_hours:
+          type: array
+          items:
+            $ref: '#/components/schemas/Hours'
+          readOnly: true
+      required:
+      - id
+      - name
+      - operating_hours
+      - restaurant
+    Category:
+      type: object
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        restaurant:
+          type: integer
+        name:
+          type: string
+          maxLength: 100
+        description:
+          type: string
+      required:
+      - id
+      - name
+      - restaurant
+    Hours:
+      type: object
+      properties:
+        weekday:
+          type: integer
+          maximum: 6
+          minimum: 0
+        opens_at:
+          type: string
+          format: time
+        closes_at:
+          type: string
+          format: time
+      required:
+      - closes_at
+      - opens_at
+      - weekday
+    Inventory:
+      type: object
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        branch:
+          type: integer
+          readOnly: true
+        ingredient:
+          type: integer
+          readOnly: true
+        ingredient_name:
+          type: string
+          readOnly: true
+        unit:
+          type: string
+          readOnly: true
+        quantity:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,11}(?:\.\d{0,3})?$
+          readOnly: true
+        minimum_stock:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,11}(?:\.\d{0,3})?$
+          readOnly: true
+        updated_at:
+          type: string
+          format: date-time
+          readOnly: true
+      required:
+      - branch
+      - id
+      - ingredient
+      - ingredient_name
+      - minimum_stock
+      - quantity
+      - unit
+      - updated_at
+    LoginInputRequest:
+      type: object
+      properties:
+        username:
+          type: string
+          minLength: 1
+        password:
+          type: string
+          writeOnly: true
+          minLength: 1
+      required:
+      - password
+      - username
+    MenuItem:
+      type: object
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        branch:
+          type: integer
+        category:
+          type: integer
+        category_name:
+          type: string
+          readOnly: true
+        name:
+          type: string
+          maxLength: 160
+        description:
+          type: string
+        price:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,10}(?:\.\d{0,2})?$
+        image:
+          type: string
+          format: uri
+          nullable: true
+        sku:
+          type: string
+          maxLength: 64
+        availability:
+          type: boolean
+        preparation_time:
+          type: integer
+          maximum: 9223372036854775807
+          minimum: 0
+          format: int64
+        modifiers:
+          type: array
+          items:
+            $ref: '#/components/schemas/Modifier'
+          readOnly: true
+      required:
+      - branch
+      - category
+      - category_name
+      - id
+      - modifiers
+      - name
+      - price
+      - sku
+    MethodEnum:
+      enum:
+      - CASH
+      - CARD
+      - TRANSFER
+      - ONLINE
+      - OTHER
+      type: string
+      description: |-
+        * `CASH` - Cash
+        * `CARD` - Card
+        * `TRANSFER` - Transfer
+        * `ONLINE` - Online
+        * `OTHER` - Other
+    Modifier:
+      type: object
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        name:
+          type: string
+          maxLength: 100
+        price:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,10}(?:\.\d{0,2})?$
+      required:
+      - id
+      - name
+    Movement:
+      type: object
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        inventory_item:
+          type: integer
+          readOnly: true
+        kind:
+          allOf:
+          - $ref: '#/components/schemas/MovementKindEnum'
+          readOnly: true
+        quantity:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,11}(?:\.\d{0,3})?$
+          readOnly: true
+        balance_after:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,11}(?:\.\d{0,3})?$
+          readOnly: true
+        order:
+          type: integer
+          readOnly: true
+          nullable: true
+        actor:
+          type: integer
+          readOnly: true
+          nullable: true
+        reference:
+          type: string
+          readOnly: true
+        notes:
+          type: string
+          readOnly: true
+        created_at:
+          type: string
+          format: date-time
+          readOnly: true
+      required:
+      - actor
+      - balance_after
+      - created_at
+      - id
+      - inventory_item
+      - kind
+      - notes
+      - order
+      - quantity
+      - reference
+    MovementKindEnum:
+      enum:
+      - PURCHASE
+      - SALE
+      - WASTE
+      - ADJUSTMENT
+      - RETURN
+      - TRANSFER
+      type: string
+      description: |-
+        * `PURCHASE` - Purchase
+        * `SALE` - Sale
+        * `WASTE` - Waste
+        * `ADJUSTMENT` - Adjustment
+        * `RETURN` - Return
+        * `TRANSFER` - Transfer
+    Order:
+      type: object
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        branch:
+          type: integer
+          readOnly: true
+        customer:
+          type: integer
+          readOnly: true
+        table:
+          type: integer
+          readOnly: true
+          nullable: true
+        order_type:
+          allOf:
+          - $ref: '#/components/schemas/OrderTypeEnum'
+          readOnly: true
+        status:
+          allOf:
+          - $ref: '#/components/schemas/OrderStatusEnum'
+          readOnly: true
+        subtotal:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,12}(?:\.\d{0,2})?$
+          readOnly: true
+        tax:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,12}(?:\.\d{0,2})?$
+          readOnly: true
+        discount:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,12}(?:\.\d{0,2})?$
+          readOnly: true
+        total:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,12}(?:\.\d{0,2})?$
+          readOnly: true
+        currency:
+          type: string
+          readOnly: true
+        notes:
+          type: string
+          readOnly: true
+        delivery_address:
+          type: string
+          readOnly: true
+        request_key:
+          type: string
+          format: uuid
+          readOnly: true
+        priority:
+          type: integer
+          readOnly: true
+        created_at:
+          type: string
+          format: date-time
+          readOnly: true
+        confirmed_at:
+          type: string
+          format: date-time
+          readOnly: true
+          nullable: true
+        preparing_at:
+          type: string
+          format: date-time
+          readOnly: true
+          nullable: true
+        ready_at:
+          type: string
+          format: date-time
+          readOnly: true
+          nullable: true
+        completed_at:
+          type: string
+          format: date-time
+          readOnly: true
+          nullable: true
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/OrderItem'
+          readOnly: true
+      required:
+      - branch
+      - completed_at
+      - confirmed_at
+      - created_at
+      - currency
+      - customer
+      - delivery_address
+      - discount
+      - id
+      - items
+      - notes
+      - order_type
+      - preparing_at
+      - priority
+      - ready_at
+      - request_key
+      - status
+      - subtotal
+      - table
+      - tax
+      - total
+    OrderCreateRequest:
+      type: object
+      properties:
+        branch:
+          type: integer
+        table:
+          type: integer
+          nullable: true
+        order_type:
+          allOf:
+          - $ref: '#/components/schemas/OrderTypeEnum'
+          default: TAKEAWAY
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/OrderLineInputRequest'
+        notes:
+          type: string
+          maxLength: 5000
+        delivery_address:
+          type: string
+          maxLength: 2000
+        discount:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,12}(?:\.\d{0,2})?$
+        request_key:
+          type: string
+          format: uuid
+      required:
+      - branch
+      - items
+    OrderItem:
+      type: object
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        menu_item:
+          type: integer
+        name:
+          type: string
+          maxLength: 160
+        quantity:
+          type: integer
+          maximum: 9223372036854775807
+          minimum: 1
+          format: int64
+        unit_price:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,10}(?:\.\d{0,2})?$
+        subtotal:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,12}(?:\.\d{0,2})?$
+        notes:
+          type: string
+        modifiers:
+          type: array
+          items:
+            $ref: '#/components/schemas/OrderModifier'
+          readOnly: true
+      required:
+      - id
+      - menu_item
+      - modifiers
+      - name
+      - quantity
+      - subtotal
+      - unit_price
+    OrderLineInputRequest:
+      type: object
+      properties:
+        menu_item:
+          type: integer
+          minimum: 1
+        quantity:
+          type: integer
+          maximum: 100
+          minimum: 1
+        modifiers:
+          type: array
+          items:
+            type: integer
+            minimum: 1
+          maxItems: 30
+        notes:
+          type: string
+          maxLength: 2000
+      required:
+      - menu_item
+      - quantity
+    OrderModifier:
+      type: object
+      properties:
+        modifier:
+          type: integer
+        name:
+          type: string
+          maxLength: 100
+        price:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,10}(?:\.\d{0,2})?$
+      required:
+      - modifier
+      - name
+      - price
+    OrderStatusEnum:
+      enum:
+      - PENDING
+      - CONFIRMED
+      - PREPARING
+      - READY
+      - SERVED
+      - COMPLETED
+      - CANCELLED
+      type: string
+      description: |-
+        * `PENDING` - Pending
+        * `CONFIRMED` - Confirmed
+        * `PREPARING` - Preparing
+        * `READY` - Ready
+        * `SERVED` - Served
+        * `COMPLETED` - Completed
+        * `CANCELLED` - Cancelled
+    OrderTypeEnum:
+      enum:
+      - DINE_IN
+      - TAKEAWAY
+      - DELIVERY
+      type: string
+      description: |-
+        * `DINE_IN` - Dine in
+        * `TAKEAWAY` - Takeaway
+        * `DELIVERY` - Delivery
+    PaginatedBranchList:
+      type: object
+      required:
+      - count
+      - results
+      properties:
+        count:
+          type: integer
+          example: 123
+        next:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?page=4
+        previous:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?page=2
+        results:
+          type: array
+          items:
+            $ref: '#/components/schemas/Branch'
+    PaginatedCategoryList:
+      type: object
+      required:
+      - count
+      - results
+      properties:
+        count:
+          type: integer
+          example: 123
+        next:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?page=4
+        previous:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?page=2
+        results:
+          type: array
+          items:
+            $ref: '#/components/schemas/Category'
+    PaginatedInventoryList:
+      type: object
+      required:
+      - count
+      - results
+      properties:
+        count:
+          type: integer
+          example: 123
+        next:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?page=4
+        previous:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?page=2
+        results:
+          type: array
+          items:
+            $ref: '#/components/schemas/Inventory'
+    PaginatedMenuItemList:
+      type: object
+      required:
+      - count
+      - results
+      properties:
+        count:
+          type: integer
+          example: 123
+        next:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?page=4
+        previous:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?page=2
+        results:
+          type: array
+          items:
+            $ref: '#/components/schemas/MenuItem'
+    PaginatedMovementList:
+      type: object
+      required:
+      - count
+      - results
+      properties:
+        count:
+          type: integer
+          example: 123
+        next:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?page=4
+        previous:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?page=2
+        results:
+          type: array
+          items:
+            $ref: '#/components/schemas/Movement'
+    PaginatedOrderList:
+      type: object
+      required:
+      - count
+      - results
+      properties:
+        count:
+          type: integer
+          example: 123
+        next:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?page=4
+        previous:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?page=2
+        results:
+          type: array
+          items:
+            $ref: '#/components/schemas/Order'
+    PaginatedPaymentList:
+      type: object
+      required:
+      - count
+      - results
+      properties:
+        count:
+          type: integer
+          example: 123
+        next:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?page=4
+        previous:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?page=2
+        results:
+          type: array
+          items:
+            $ref: '#/components/schemas/Payment'
+    PaginatedProfileList:
+      type: object
+      required:
+      - count
+      - results
+      properties:
+        count:
+          type: integer
+          example: 123
+        next:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?page=4
+        previous:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?page=2
+        results:
+          type: array
+          items:
+            $ref: '#/components/schemas/Profile'
+    PaginatedPublicTableList:
+      type: object
+      required:
+      - count
+      - results
+      properties:
+        count:
+          type: integer
+          example: 123
+        next:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?page=4
+        previous:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?page=2
+        results:
+          type: array
+          items:
+            $ref: '#/components/schemas/PublicTable'
+    PaginatedReservationList:
+      type: object
+      required:
+      - count
+      - results
+      properties:
+        count:
+          type: integer
+          example: 123
+        next:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?page=4
+        previous:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?page=2
+        results:
+          type: array
+          items:
+            $ref: '#/components/schemas/Reservation'
+    PaginatedRestaurantList:
+      type: object
+      required:
+      - count
+      - results
+      properties:
+        count:
+          type: integer
+          example: 123
+        next:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?page=4
+        previous:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?page=2
+        results:
+          type: array
+          items:
+            $ref: '#/components/schemas/Restaurant'
+    PaginatedStaffList:
+      type: object
+      required:
+      - count
+      - results
+      properties:
+        count:
+          type: integer
+          example: 123
+        next:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?page=4
+        previous:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?page=2
+        results:
+          type: array
+          items:
+            $ref: '#/components/schemas/Staff'
+    PaginatedTableList:
+      type: object
+      required:
+      - count
+      - results
+      properties:
+        count:
+          type: integer
+          example: 123
+        next:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?page=4
+        previous:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?page=2
+        results:
+          type: array
+          items:
+            $ref: '#/components/schemas/Table'
+    PatchedProfileRequest:
+      type: object
+      properties:
+        email:
+          type: string
+          format: email
+          minLength: 1
+          maxLength: 254
+        first_name:
+          type: string
+          maxLength: 150
+        last_name:
+          type: string
+          maxLength: 150
+        phone:
+          type: string
+          maxLength: 32
+        preferences: {}
+    PatchedStatusInputRequest:
+      type: object
+      properties:
+        status:
+          type: string
+          minLength: 1
+    PatchedTableRequest:
+      type: object
+      properties:
+        branch:
+          type: integer
+        table_number:
+          type: string
+          minLength: 1
+          maxLength: 20
+        capacity:
+          type: integer
+          maximum: 9223372036854775807
+          minimum: 1
+          format: int64
+        location:
+          type: string
+          maxLength: 120
+        status:
+          $ref: '#/components/schemas/TableStatusEnum'
+        is_active:
+          type: boolean
+        assigned_waiter:
+          type: integer
+          nullable: true
+    Payment:
+      type: object
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        order:
+          type: integer
+          readOnly: true
+        amount:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,12}(?:\.\d{0,2})?$
+          readOnly: true
+        refunded_amount:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,12}(?:\.\d{0,2})?$
+          readOnly: true
+        currency:
+          type: string
+          readOnly: true
+        method:
+          allOf:
+          - $ref: '#/components/schemas/MethodEnum'
+          readOnly: true
+        status:
+          allOf:
+          - $ref: '#/components/schemas/PaymentStatusEnum'
+          readOnly: true
+        reference:
+          type: string
+          readOnly: true
+        recorded_by:
+          type: integer
+          readOnly: true
+        paid_at:
+          type: string
+          format: date-time
+          readOnly: true
+          nullable: true
+        created_at:
+          type: string
+          format: date-time
+          readOnly: true
+      required:
+      - amount
+      - created_at
+      - currency
+      - id
+      - method
+      - order
+      - paid_at
+      - recorded_by
+      - reference
+      - refunded_amount
+      - status
+    PaymentInputRequest:
+      type: object
+      properties:
+        order:
+          type: integer
+          minimum: 1
+        amount:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,12}(?:\.\d{0,2})?$
+        method:
+          $ref: '#/components/schemas/MethodEnum'
+        reference:
+          type: string
+          minLength: 1
+          maxLength: 120
+      required:
+      - amount
+      - method
+      - order
+      - reference
+    PaymentStatusEnum:
+      enum:
+      - PENDING
+      - PAID
+      - FAILED
+      - REFUNDED
+      - PARTIALLY_REFUNDED
+      type: string
+      description: |-
+        * `PENDING` - Pending
+        * `PAID` - Paid
+        * `FAILED` - Failed
+        * `REFUNDED` - Refunded
+        * `PARTIALLY_REFUNDED` - Partially refunded
+    PriorityInputRequest:
+      type: object
+      properties:
+        priority:
+          type: integer
+          maximum: 10
+          minimum: 0
+      required:
+      - priority
+    Profile:
+      type: object
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        username:
+          type: string
+          readOnly: true
+          description: Required. 150 characters or fewer. Letters, digits and @/./+/-/_
+            only.
+        email:
+          type: string
+          format: email
+          maxLength: 254
+        first_name:
+          type: string
+          maxLength: 150
+        last_name:
+          type: string
+          maxLength: 150
+        phone:
+          type: string
+          maxLength: 32
+        preferences: {}
+        role:
+          allOf:
+          - $ref: '#/components/schemas/RoleEnum'
+          readOnly: true
+      required:
+      - email
+      - id
+      - role
+      - username
+    ProfileRequest:
+      type: object
+      properties:
+        email:
+          type: string
+          format: email
+          minLength: 1
+          maxLength: 254
+        first_name:
+          type: string
+          maxLength: 150
+        last_name:
+          type: string
+          maxLength: 150
+        phone:
+          type: string
+          maxLength: 32
+        preferences: {}
+      required:
+      - email
+    PublicTable:
+      type: object
+      properties:
+        id:
+          type: integer
+        table_number:
+          type: string
+        capacity:
+          type: integer
+        status:
+          type: string
+      required:
+      - capacity
+      - id
+      - status
+      - table_number
+    RefundInputRequest:
+      type: object
+      properties:
+        amount:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,12}(?:\.\d{0,2})?$
+        reference:
+          type: string
+          minLength: 1
+          maxLength: 120
+        reason:
+          type: string
+          minLength: 1
+          maxLength: 2000
+      required:
+      - amount
+      - reason
+      - reference
+    Registration:
+      type: object
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        username:
+          type: string
+          description: Required. 150 characters or fewer. Letters, digits and @/./+/-/_
+            only.
+          pattern: ^[\w.@+-]+$
+          maxLength: 150
+        email:
+          type: string
+          format: email
+          maxLength: 254
+        first_name:
+          type: string
+          maxLength: 150
+        last_name:
+          type: string
+          maxLength: 150
+        phone:
+          type: string
+          maxLength: 32
+      required:
+      - email
+      - id
+      - username
+    RegistrationRequest:
+      type: object
+      properties:
+        username:
+          type: string
+          minLength: 1
+          description: Required. 150 characters or fewer. Letters, digits and @/./+/-/_
+            only.
+          pattern: ^[\w.@+-]+$
+          maxLength: 150
+        email:
+          type: string
+          format: email
+          minLength: 1
+          maxLength: 254
+        password:
+          type: string
+          writeOnly: true
+          minLength: 1
+        first_name:
+          type: string
+          maxLength: 150
+        last_name:
+          type: string
+          maxLength: 150
+        phone:
+          type: string
+          maxLength: 32
+      required:
+      - email
+      - password
+      - username
+    Reservation:
+      type: object
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        customer:
+          type: integer
+          readOnly: true
+        branch:
+          type: integer
+        table:
+          type: integer
+        guest_count:
+          type: integer
+          maximum: 9223372036854775807
+          minimum: 1
+          format: int64
+        reservation_date:
+          type: string
+          format: date
+        start_time:
+          type: string
+          format: time
+        end_time:
+          type: string
+          format: time
+        status:
+          allOf:
+          - $ref: '#/components/schemas/ReservationStatusEnum'
+          readOnly: true
+        special_requests:
+          type: string
+        guest_name:
+          type: string
+          maxLength: 160
+        guest_phone:
+          type: string
+          maxLength: 32
+        created_at:
+          type: string
+          format: date-time
+          readOnly: true
+      required:
+      - branch
+      - created_at
+      - customer
+      - end_time
+      - guest_count
+      - id
+      - reservation_date
+      - start_time
+      - status
+      - table
+    ReservationRequest:
+      type: object
+      properties:
+        branch:
+          type: integer
+        table:
+          type: integer
+        guest_count:
+          type: integer
+          maximum: 9223372036854775807
+          minimum: 1
+          format: int64
+        reservation_date:
+          type: string
+          format: date
+        start_time:
+          type: string
+          format: time
+        end_time:
+          type: string
+          format: time
+        special_requests:
+          type: string
+        guest_name:
+          type: string
+          maxLength: 160
+        guest_phone:
+          type: string
+          maxLength: 32
+      required:
+      - branch
+      - end_time
+      - guest_count
+      - reservation_date
+      - start_time
+      - table
+    ReservationStatusEnum:
+      enum:
+      - PENDING
+      - CONFIRMED
+      - SEATED
+      - COMPLETED
+      - CANCELLED
+      - NO_SHOW
+      type: string
+      description: |-
+        * `PENDING` - Pending
+        * `CONFIRMED` - Confirmed
+        * `SEATED` - Seated
+        * `COMPLETED` - Completed
+        * `CANCELLED` - Cancelled
+        * `NO_SHOW` - No show
+    Restaurant:
+      type: object
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        name:
+          type: string
+          maxLength: 160
+        description:
+          type: string
+        address:
+          type: string
+        phone:
+          type: string
+          maxLength: 32
+        email:
+          oneOf:
+          - type: string
+            format: email
+            maxLength: 254
+          - type: string
+            maxLength: 0
+        timezone:
+          type: string
+          maxLength: 64
+        currency:
+          type: string
+          maxLength: 3
+      required:
+      - id
+      - name
+    RoleEnum:
+      enum:
+      - ADMIN
+      - MANAGER
+      - CASHIER
+      - WAITER
+      - KITCHEN
+      - INVENTORY_MANAGER
+      - CUSTOMER
+      type: string
+      description: |-
+        * `ADMIN` - Administrator
+        * `MANAGER` - Manager
+        * `CASHIER` - Cashier
+        * `WAITER` - Waiter
+        * `KITCHEN` - Kitchen
+        * `INVENTORY_MANAGER` - Inventory manager
+        * `CUSTOMER` - Customer
+    Staff:
+      type: object
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        username:
+          type: string
+          readOnly: true
+          description: Required. 150 characters or fewer. Letters, digits and @/./+/-/_
+            only.
+        email:
+          type: string
+          format: email
+          maxLength: 254
+        first_name:
+          type: string
+          maxLength: 150
+        last_name:
+          type: string
+          maxLength: 150
+        phone:
+          type: string
+          maxLength: 32
+        preferences: {}
+        role:
+          $ref: '#/components/schemas/RoleEnum'
+        is_active:
+          type: boolean
+          title: Active
+          description: Designates whether this user should be treated as active. Unselect
+            this instead of deleting accounts.
+      required:
+      - email
+      - id
+      - username
+    Table:
+      type: object
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        branch:
+          type: integer
+        table_number:
+          type: string
+          maxLength: 20
+        capacity:
+          type: integer
+          maximum: 9223372036854775807
+          minimum: 1
+          format: int64
+        location:
+          type: string
+          maxLength: 120
+        status:
+          $ref: '#/components/schemas/TableStatusEnum'
+        is_active:
+          type: boolean
+        assigned_waiter:
+          type: integer
+          nullable: true
+      required:
+      - branch
+      - capacity
+      - id
+      - table_number
+    TableRequest:
+      type: object
+      properties:
+        branch:
+          type: integer
+        table_number:
+          type: string
+          minLength: 1
+          maxLength: 20
+        capacity:
+          type: integer
+          maximum: 9223372036854775807
+          minimum: 1
+          format: int64
+        location:
+          type: string
+          maxLength: 120
+        status:
+          $ref: '#/components/schemas/TableStatusEnum'
+        is_active:
+          type: boolean
+        assigned_waiter:
+          type: integer
+          nullable: true
+      required:
+      - branch
+      - capacity
+      - table_number
+    TableStatusEnum:
+      enum:
+      - AVAILABLE
+      - OCCUPIED
+      - RESERVED
+      - CLEANING
+      - OUT_OF_SERVICE
+      type: string
+      description: |-
+        * `AVAILABLE` - Available
+        * `OCCUPIED` - Occupied
+        * `RESERVED` - Reserved
+        * `CLEANING` - Cleaning
+        * `OUT_OF_SERVICE` - Out of service
+  securitySchemes:
+    cookieAuth:
+      type: apiKey
+      in: cookie
+      name: sessionid

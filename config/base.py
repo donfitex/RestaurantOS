@@ -27,6 +27,8 @@ INSTALLED_APPS = [
     "django.contrib.staticfiles",
     "rest_framework",
     "django_filters",
+    "drf_spectacular",
+    "drf_spectacular_sidecar",
     "apps.common",
     "apps.users",
     "apps.restaurants",
@@ -128,6 +130,7 @@ STATIC_ROOT = BASE_DIR / "staticfiles"
 MEDIA_ROOT = BASE_DIR / "media"
 MEDIA_URL = "/media/"
 REST_FRAMEWORK = {
+    "DEFAULT_SCHEMA_CLASS": "drf_spectacular.openapi.AutoSchema",
     "DEFAULT_AUTHENTICATION_CLASSES": ["rest_framework.authentication.SessionAuthentication"],
     "DEFAULT_PERMISSION_CLASSES": ["rest_framework.permissions.IsAuthenticated"],
     "DEFAULT_FILTER_BACKENDS": ["django_filters.rest_framework.DjangoFilterBackend", "rest_framework.filters.SearchFilter", "rest_framework.filters.OrderingFilter"],
@@ -157,3 +160,19 @@ FILE_UPLOAD_MAX_MEMORY_SIZE = 2 * 1024 * 1024
 SESSION_COOKIE_HTTPONLY = True
 SESSION_COOKIE_SAMESITE = "Lax"
 CSRF_COOKIE_SAMESITE = "Lax"
+
+SPECTACULAR_SETTINGS = {
+    "TITLE": "RestaurantOS API",
+    "DESCRIPTION": "Branch-scoped restaurant operations. Session authentication and CSRF are required for unsafe requests. Payments record staff-verified transactions.",
+    "VERSION": "1.0.0",
+    "SERVE_INCLUDE_SCHEMA": False,
+    "COMPONENT_SPLIT_REQUEST": True,
+    "SWAGGER_UI_DIST": "SIDECAR",
+    "SWAGGER_UI_FAVICON_HREF": "SIDECAR",
+    "ENUM_NAME_OVERRIDES": {
+        "OrderStatusEnum": ["PENDING", "CONFIRMED", "PREPARING", "READY", "SERVED", "COMPLETED", "CANCELLED"],
+        "ReservationStatusEnum": ["PENDING", "CONFIRMED", "SEATED", "COMPLETED", "CANCELLED", "NO_SHOW"],
+        "PaymentStatusEnum": ["PENDING", "PAID", "FAILED", "REFUNDED", "PARTIALLY_REFUNDED"],
+        "TableStatusEnum": ["AVAILABLE", "OCCUPIED", "RESERVED", "CLEANING", "OUT_OF_SERVICE"],
+    },
+}

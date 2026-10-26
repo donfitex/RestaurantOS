@@ -19,6 +19,8 @@ class InventoryViewSet(ReadOnlyModelViewSet):
     search_fields = ["ingredient__name", "ingredient__sku"]
 
     def get_queryset(self):
+        if getattr(self, "swagger_fake_view", False):
+            return self.queryset.none()
         return scope_branches(super().get_queryset(), self.request.user)
 
     @action(detail=False, methods=["get"], url_path="low-stock")

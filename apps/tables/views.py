@@ -16,6 +16,8 @@ class TableViewSet(ModelViewSet):
     http_method_names = ["get", "post", "patch", "head", "options"]
 
     def get_queryset(self):
+        if getattr(self, "swagger_fake_view", False):
+            return self.queryset.none()
         return scope_branches(super().get_queryset(), self.request.user)
 
 

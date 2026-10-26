@@ -18,7 +18,12 @@ Including another URLconf
 from django.contrib import admin
 from django.urls import path, include
 
+from drf_spectacular.views import SpectacularAPIView, SpectacularSwaggerSplitView
+from apps.common import schema  # noqa: F401
+
 urlpatterns = [
+    path("api/schema/", SpectacularAPIView.as_view(), name="schema"),
+    path("api/docs/", SpectacularSwaggerSplitView.as_view(url_name="schema"), name="api_docs"),
     path("", include("apps.common.urls")),
     path("api/v1/reports/", include("apps.reports.urls")),
     path("api/v1/", include("apps.payments.urls")),

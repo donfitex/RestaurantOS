@@ -7,3 +7,4 @@ python-dotenv>=1,<2
 whitenoise>=6,<7
 gunicorn>=23,<24; sys_platform != "win32"
 Pillow>=11,<13
+drf-spectacular[sidecar]>=0.28,<1

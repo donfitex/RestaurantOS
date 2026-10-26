@@ -20,6 +20,8 @@ class PaymentViewSet(ReadOnlyModelViewSet):
     filterset_fields = ["order", "status", "method", "order__branch"]
 
     def get_queryset(self):
+        if getattr(self, "swagger_fake_view", False):
+            return self.queryset.none()
         qs = super().get_queryset()
         if self.request.user.role == "CUSTOMER" and not is_admin(self.request.user):
             return qs.filter(order__customer=self.request.user)

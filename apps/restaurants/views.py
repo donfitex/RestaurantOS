@@ -28,4 +28,6 @@ class StaffBranchViewSet(ReadOnlyModelViewSet):
     write_roles = ()
 
     def get_queryset(self):
+        if getattr(self, "swagger_fake_view", False):
+            return Branch.objects.none()
         return staff_branches(self.request.user).select_related("restaurant").prefetch_related("operating_hours").order_by("name")
