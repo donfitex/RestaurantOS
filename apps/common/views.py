@@ -112,7 +112,17 @@ def staff_dashboard(request):
 
     if request.user.role == "CUSTOMER" and not request.user.is_superuser:
         raise PermissionDenied
-    return render(request, "public/staff.html")
+    from apps.users.permissions import is_admin
+
+    administrator = is_admin(request.user)
+    return render(
+        request,
+        "public/staff.html",
+        {
+            "staff_role": "ADMIN" if administrator else request.user.role,
+            "staff_label": "Administrator" if administrator else request.user.get_role_display(),
+        },
+    )
 
 
 @login_required

@@ -36,3 +36,16 @@ def test_public_menu_render_avoids_per_item_restaurant_queries(api_client):
     with CaptureQueriesContext(connection) as large:
         assert api_client.get("/menu/").status_code == 200
     assert len(large) <= len(small) + 1
+
+
+@pytest.mark.postgres
+@pytest.mark.skipif(connection.vendor != "postgresql", reason="PostgreSQL expression indexes")
+def test_search_indexes_match_case_insensitive_search_expressions():
+    with connection.cursor() as cursor:
+        cursor.execute(
+            "SELECT indexname, indexdef FROM pg_indexes WHERE tablename = %s", ["menu_menuitem"]
+        )
+        definitions = dict(cursor.fetchall())
+    for name in ["menu_name_trigram", "menu_description_trgm", "menu_sku_trigram"]:
+        assert "upper(" in definitions[name].lower()
+        assert "gin_trgm_ops" in definitions[name]

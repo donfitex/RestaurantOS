@@ -81,7 +81,11 @@ class OrderViewSet(mixins.ListModelMixin, mixins.RetrieveModelMixin, viewsets.Ge
             "CUSTOMER",
         ]:
             raise PermissionDenied("Your role cannot cancel orders.")
-        if request.user.role == "CUSTOMER" and order.status != "PENDING":
+        if (
+            request.user.role == "CUSTOMER"
+            and not is_admin(request.user)
+            and order.status != "PENDING"
+        ):
             raise PermissionDenied("Only pending orders can be cancelled by customers.")
         return Response(
             OrderSerializer(
@@ -100,11 +104,13 @@ class OrderViewSet(mixins.ListModelMixin, mixins.RetrieveModelMixin, viewsets.Ge
     def kitchen(self, request):
         if request.user.role not in ["KITCHEN", "MANAGER"] and not is_admin(request.user):
             raise PermissionDenied("Kitchen access is restricted to kitchen staff and managers.")
-        queue = (
-            self.get_queryset()
-            .filter(status__in=["CONFIRMED", "PREPARING", "READY", "SERVED", "COMPLETED"])
-            .order_by("-priority", "created_at")
-        )
+        queue = self.filter_queryset(self.get_queryset())
+        if request.query_params.get("status") in ["SERVED", "COMPLETED"]:
+            queue = queue.order_by("-updated_at")
+        else:
+            queue = queue.filter(status__in=["CONFIRMED", "PREPARING", "READY"]).order_by(
+                "-priority", "created_at"
+            )
         page = self.paginate_queryset(queue)
         return self.get_paginated_response(self.get_serializer(page, many=True).data)
 
@@ -115,7 +121,7 @@ class OrderViewSet(mixins.ListModelMixin, mixins.RetrieveModelMixin, viewsets.Ge
         from django.db import transaction
 
         with transaction.atomic():
-            order = self.get_queryset().select_for_update().get(pk=self.get_object().pk)
+            order = self.get_queryset().select_for_update(of=("self",)).get(pk=self.get_object().pk)
             value = request.data.get("priority")
             if isinstance(value, bool) or not isinstance(value, int) or not 0 <= value <= 10:
                 raise ValidationError({"priority": "Use an integer from zero to ten."})

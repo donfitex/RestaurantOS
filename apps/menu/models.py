@@ -1,6 +1,7 @@
-from django.contrib.postgres.indexes import GinIndex
+from django.contrib.postgres.indexes import GinIndex, OpClass
 from django.core.validators import MinValueValidator
 from django.db import models
+from django.db.models.functions import Upper
 
 from apps.common.models import ActiveModel, TimestampedModel
 from apps.common.validators import validate_image_upload
@@ -49,7 +50,11 @@ class MenuItem(ActiveModel):
         ]
         indexes = [
             models.Index(fields=["branch", "availability", "category"]),
-            GinIndex(fields=["name"], name="menu_name_trigram", opclasses=["gin_trgm_ops"]),
+            GinIndex(OpClass(Upper("name"), name="gin_trgm_ops"), name="menu_name_trigram"),
+            GinIndex(
+                OpClass(Upper("description"), name="gin_trgm_ops"), name="menu_description_trgm"
+            ),
+            GinIndex(OpClass(Upper("sku"), name="gin_trgm_ops"), name="menu_sku_trigram"),
         ]
 
     def clean(self):

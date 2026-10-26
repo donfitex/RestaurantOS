@@ -28,6 +28,8 @@ output.append(OS.node("p", `Low stock: ${report.inventory.low_stock} of ${report
         const branchKey = active === "Payments" ? "order__branch" : "branch";
         const data = await request(url || `/api/v1/${endpoints[active]}/?${branchKey}=${branch.value}`); content.replaceChildren();
         if (active === "Payments") paymentForm();
+        if (active === "Kitchen") {const controls = OS.node("div", undefined, "toolbar"); buttons(controls, "Active queue", () => load(`/api/v1/orders/kitchen/?branch=${branch.value}`), false); buttons(controls, "Completed history", () => load(`/api/v1/orders/kitchen/?branch=${branch.value}&status=COMPLETED`), false); content.append(controls);}
+
         for (const row of data.results) {
           const card = OS.node("article", undefined, "card"), actions = OS.node("div", undefined, "toolbar");
           if (["Orders", "Kitchen"].includes(active)) {
