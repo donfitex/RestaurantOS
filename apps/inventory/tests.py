@@ -76,3 +76,17 @@ class StockDeductionTests(TestCase):
         self.assertEqual(self.order.status, "PENDING")
         self.assertEqual(self.stock.quantity, Decimal("3"))
         self.assertFalse(StockMovement.objects.exists())
+
+    def test_stock_api_requires_branch_membership(self):
+        from django.contrib.auth import get_user_model
+        from rest_framework.test import APIClient
+        user = get_user_model().objects.create_user(username="stock", email="stock@example.com", role="INVENTORY_MANAGER")
+        client = APIClient()
+        client.force_authenticate(user)
+        self.assertEqual(client.get("/api/v1/inventory/").data["count"], 0)
+        self.stock.branch.staff.add(user)
+        response = client.post("/api/v1/inventory/restock/", {"inventory_item": self.stock.pk, "quantity": "2", "notes": "Delivery"})
+        self.assertEqual(response.status_code, 201, response.data)
+        self.stock.refresh_from_db()
+        self.assertEqual(self.stock.quantity, Decimal("7"))
+        self.assertEqual(client.get(f"/api/v1/inventory/{self.stock.pk}/movements/").data["count"], 1)
