@@ -6,7 +6,7 @@ Phases 2?46 have been implemented and committed individually to main, including 
 
 Phase 47: development, API, architecture, testing, security, database, deployment and restaurant-operations guides are provided. Local initialization and repeatable demonstration data support the documented setup.
 
-Phase 48: local container deployment and integrated smoke verification are next, following the user's request to use a local container first.
+Phase 48: local Docker deployment is running and passed integrated browser/HTTP smoke verification, following the user's request to use a local container first. See local-deployment.md.
 
 Phase 49: final release audit is pending integrated deployment verification. Public internet deployment, domain/TLS, SMTP credentials and a payment-provider account are outside the currently selected local deployment target.
 
