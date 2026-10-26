@@ -8,3 +8,6 @@ class PublicInterfaceTests(TestCase):
 
     def test_dashboard_requires_login(self):
         self.assertEqual(self.client.get("/my/").status_code, 302)
+
+    def test_reservation_interface_requires_login(self):
+        self.assertEqual(self.client.get("/reservations/").status_code, 302)

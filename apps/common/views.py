@@ -58,3 +58,9 @@ def order_confirmation(request, pk):
     from apps.orders.models import Order
     order = get_object_or_404(Order, pk=pk, customer=request.user)
     return render(request, "public/order_confirmation.html", {"order": order})
+
+
+@login_required
+@ensure_csrf_cookie
+def reservation_page(request):
+    return render(request, "public/reservations.html")
