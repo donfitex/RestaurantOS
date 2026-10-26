@@ -90,3 +90,14 @@ class StockDeductionTests(TestCase):
         self.stock.refresh_from_db()
         self.assertEqual(self.stock.quantity, Decimal("7"))
         self.assertEqual(client.get(f"/api/v1/inventory/{self.stock.pk}/movements/").data["count"], 1)
+
+    def test_alert_resolves_after_restock(self):
+        from .models import StockAlert
+        from .services import adjust_stock
+        self.stock.ingredient.minimum_stock = Decimal("5")
+        self.stock.ingredient.save()
+        self.assertTrue(StockAlert.objects.get(inventory_item=self.stock).is_active)
+        adjust_stock(inventory_item=self.stock, quantity="1", kind="PURCHASE", actor=self.order.customer, notes="Delivery")
+        alert = StockAlert.objects.get(inventory_item=self.stock)
+        self.assertFalse(alert.is_active)
+        self.assertIsNotNone(alert.resolved_at)

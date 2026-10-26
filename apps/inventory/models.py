@@ -93,3 +93,10 @@ class RecipeIngredient(TimestampedModel):
         from django.core.exceptions import ValidationError
         if self.recipe_id and self.ingredient_id and self.recipe.menu_item.branch.restaurant_id != self.ingredient.restaurant_id:
             raise ValidationError("Recipe ingredients must belong to the same restaurant.")
+
+
+class StockAlert(TimestampedModel):
+    inventory_item = models.OneToOneField(InventoryItem, on_delete=models.CASCADE, related_name="alert")
+    kind = models.CharField(max_length=20, default="LOW_STOCK", editable=False)
+    is_active = models.BooleanField(default=True, db_index=True)
+    resolved_at = models.DateTimeField(null=True, blank=True)
